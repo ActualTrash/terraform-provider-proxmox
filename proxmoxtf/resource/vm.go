@@ -1633,6 +1633,19 @@ func vmShutdown(ctx context.Context, vmAPI *vms.Client, d *schema.ResourceData) 
 	return diag.FromErr(vmAPI.WaitForVMState(ctx, "stopped", shutdownTimeout, 1))
 }
 
+// Forcefully stop the VM, then wait for it to actually stop
+func vmStop(ctx context.Context, vmAPI *vms.Client, d *schema.ResourceData) diag.Diagnostics {
+	tflog.Debug(ctx, "Stopping VM")
+	shutdownTimeout := d.Get(mkResourceVirtualEnvironmentVMTimeoutShutdownVM).(int)
+
+	e := vmAPI.StopVM(ctx, shutdownTimeout+30) // TODO: Change this to stop timeout
+	if e != nil {
+		return diag.FromErr(e)
+	}
+
+	return diag.FromErr(vmAPI.WaitForVMState(ctx, "stopped", shutdownTimeout, 1))
+}
+
 func vmCreateClone(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	config := m.(proxmoxtf.ProviderConfiguration)
 
@@ -5674,7 +5687,7 @@ func vmDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.D
 	}
 
 	if status.Status != "stopped" {
-		if e := vmShutdown(ctx, vmAPI, d); e != nil {
+		if e := vmStop(ctx, vmAPI, d); e != nil {
 			return e
 		}
 	}
