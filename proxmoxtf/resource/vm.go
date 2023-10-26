@@ -135,6 +135,7 @@ const (
 	dvResourceVirtualEnvironmentVMVGAMemory                         = 16
 	dvResourceVirtualEnvironmentVMVGAType                           = "std"
 	dvResourceVirtualEnvironmentVMSCSIHardware                      = "virtio-scsi-pci"
+	dvResourceVirtualEnvironmentVMStopOnDestroy                     = false
 
 	maxResourceVirtualEnvironmentVMAudioDevices   = 1
 	maxResourceVirtualEnvironmentVMNetworkDevices = 8
@@ -286,6 +287,7 @@ const (
 	mkResourceVirtualEnvironmentVMVGAType                           = "type"
 	mkResourceVirtualEnvironmentVMVMID                              = "vm_id"
 	mkResourceVirtualEnvironmentVMSCSIHardware                      = "scsi_hardware"
+	mkResourceVirtualEnvironmentVMStopOnDestroy                     = "stop_on_destroy"
 )
 
 // VM returns a resource that manages VMs.
@@ -1495,6 +1497,12 @@ func VM() *schema.Resource {
 				Optional:         true,
 				Default:          dvResourceVirtualEnvironmentVMSCSIHardware,
 				ValidateDiagFunc: validator.SCSIHardware(),
+			},
+			mkResourceVirtualEnvironmentVMStopOnDestroy: {
+				Type:        schema.TypeBool,
+				Description: "Whether to stop rather than shutdown on VM destroy",
+				Optional:    true,
+				Default:     dvResourceVirtualEnvironmentVMStopOnDestroy,
 			},
 		},
 		CreateContext: vmCreate,
@@ -5775,16 +5783,23 @@ func vmDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.D
 
 	vmAPI := api.Node(nodeName).VM(vmID)
 
-	// Shut down the virtual machine before deleting it.
+	// Stop or shut down the virtual machine before deleting it.
 	status, err := vmAPI.GetVMStatus(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	stop := d.Get(mkResourceVirtualEnvironmentVMStopOnDestroy).(bool)
 	if status.Status != "stopped" {
-		if e := vmStop(ctx, vmAPI, d); e != nil {
-			return e
-		}
+                if stop {
+                    if e := vmStop(ctx, vmAPI, d); e != nil {
+                            return e
+                    }
+                } else {
+                    if e := vmShutdown(ctx, vmAPI, d); e != nil {
+                            return e
+                    }
+                }
 	}
 
 	err = vmAPI.DeleteVM(ctx)
