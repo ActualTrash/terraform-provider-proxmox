@@ -240,6 +240,10 @@ output "ubuntu_vm_public_key" {
         - `unsafe` - Write directly to the disk bypassing the host cache.
     - `datastore_id` - (Optional) The identifier for the datastore to create
       the disk in (defaults to `local-lvm`).
+    - `path_in_datastore` - (Optional) The in-datastore path to the disk image.
+      ***Experimental.***Use to attach another VM's disks,
+      or (as root only) host's filesystem paths (`datastore_id` empty string).
+      See "*Example: Attached disks*".
     - `discard` - (Optional) Whether to pass discard/trim requests to the
       underlying storage. Supported values are `on`/`ignore` (defaults
       to `ignore`).
@@ -300,8 +304,9 @@ output "ubuntu_vm_public_key" {
     - `datastore_id` - (Optional) The identifier for the datastore to create the
       cloud-init disk in (defaults to `local-lvm`).
     - `interface` - (Optional) The hardware interface to connect the cloud-init
-      image to. Must be `ideN`. Will be detected if the setting is missing but a
-      cloud-init image is present, otherwise defaults to `ide2`.
+      image to. Must be one of `ide0..3`, `sata0..5`, `scsi0..30`. Will be
+      detected if the setting is missing but a cloud-init image is present,
+      otherwise defaults to `ide2`.
     - `dns` - (Optional) The DNS configuration.
         - `domain` - (Optional) The DNS search domain.
         - `server` - (Optional) The DNS server.
@@ -385,6 +390,7 @@ output "ubuntu_vm_public_key" {
         - `vmxnet3` - VMware vmxnet3.
     - `mtu` - (Optional) Force MTU, for VirtIO only. Set to 1 to use the bridge
       MTU. Cannot be larger than the bridge MTU.
+    - `queues` - (Optional) The number of queues for VirtIO (1..64).
     - `rate_limit` - (Optional) The rate limit in megabytes per second.
     - `vlan_id` - (Optional) The VLAN identifier.
 - `node_name` - (Required) The name of the node to assign the virtual machine
@@ -447,6 +453,8 @@ output "ubuntu_vm_public_key" {
   changes to this attribute.
 - `template` - (Optional) Whether to create a template (defaults to `false`).
 - `timeout_clone` - (Optional) Timeout for cloning a VM in seconds (defaults to
+  1800).
+- `timeout_create` - (Optional) Timeout for creating a VM in seconds (defaults to
   1800).
 - `timeout_move_disk` - (Optional) Timeout for moving the disk of a VM in
   seconds (defaults to 1800).
@@ -511,6 +519,73 @@ to force the migration step to migrate all disks to a specific datastore on the
 target node. If you need certain disks to be on specific datastores, set
 the `datastore_id` argument of the disks in the `disks` block to move the disks
 to the correct datastore after the cloning and migrating succeeded.
+
+## Example: Attached disks
+
+In this example VM `data_vm` holds two data disks, and is not used as an actual VM,
+but only as a container for the disks.
+It does not have any OS installation, it is never started.
+
+VM `data_user_vm` attaches those disks as `scsi1` and `scsi2`.
+**VM `data_user_vm` can be *re-created/replaced* without losing data stored on disks
+owned by `data_vm`.**
+
+This functionality is **experimental**.
+
+Do *not* simultaneously run more than one VM using same disk. For most filesystems,
+attaching one disk to multiple VM will cause errors or even data corruption.
+
+Do *not* move or resize `data_vm` disks.
+(Resource `data_user_vm` should reject attempts to move or resize non-owned disks.)
+
+```terraform
+resource "proxmox_virtual_environment_vm" "data_vm" {
+  node_name = "first-node"
+  started = false
+  on_boot = false
+
+  disk {
+    datastore_id = "local-zfs"
+    file_format  = "raw"
+    interface    = "scsi0"
+    size         = 1 
+  }
+
+  disk {
+    datastore_id = "local-zfs"
+    file_format  = "raw"
+    interface    = "scsi1"
+    size         = 4 
+  }
+}
+
+resource "proxmox_virtual_environment_vm" "data_user_vm" {
+  # boot disk
+  disk {
+    datastore_id = "local-zfs"
+    file_format  = "raw"
+    interface    = "scsi0"
+    size         = 8 
+  }
+
+  # attached disks from data_vm
+  dynamic "disk" {
+    for_each = { for idx, val in proxmox_virtual_environment_vm.data_vm.disk : idx => val }
+    iterator = data_disk
+    content {
+      datastore_id      = data_disk.value["datastore_id"]
+      path_in_datastore = data_disk.value["path_in_datastore"]
+      file_format       = data_disk.value["file_format"]
+      size              = data_disk.value["size"]
+      # assign from scsi1 and up
+      interface         = "scsi${data_disk.key + 1}" 
+    }
+  }
+
+  # remainder of VM configuration
+  ...
+}
+````
 
 ## Import
 

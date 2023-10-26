@@ -1,5 +1,112 @@
 # Changelog
 
+## [0.36.0](https://github.com/bpg/terraform-provider-proxmox/compare/v0.35.1...v0.36.0) (2023-10-26)
+
+
+### Features
+
+* **vm:** add configurable timeout for VM create operation ([#648](https://github.com/bpg/terraform-provider-proxmox/issues/648)) ([a30f96c](https://github.com/bpg/terraform-provider-proxmox/commit/a30f96c348888522ca9278d8fef4bd9b12b1b634))
+
+
+### Bug Fixes
+
+* **file:** handle missing file on state refresh ([#649](https://github.com/bpg/terraform-provider-proxmox/issues/649)) ([2a56c23](https://github.com/bpg/terraform-provider-proxmox/commit/2a56c23f52abda293f328196a0d80b9becd749a7))
+* **vm:** better handle of ctrl+c when qemu is not responding  ([#627](https://github.com/bpg/terraform-provider-proxmox/issues/627)) ([aec09e4](https://github.com/bpg/terraform-provider-proxmox/commit/aec09e4ecd8f9df937a04845162a679098f0c480))
+
+
+### Miscellaneous
+
+* **deps:** bump github.com/brianvoe/gofakeit/v6 from 6.23.2 to 6.24.0 ([#642](https://github.com/bpg/terraform-provider-proxmox/issues/642)) ([72951dc](https://github.com/bpg/terraform-provider-proxmox/commit/72951dc65691bdb44bae5f31b218a31811ffdfb7))
+* **deps:** bump google.golang.org/grpc from 1.57.0 to 1.57.1 ([#652](https://github.com/bpg/terraform-provider-proxmox/issues/652)) ([4740da0](https://github.com/bpg/terraform-provider-proxmox/commit/4740da0d1f413743c252be963f7b6252ed3f0d96))
+* **deps:** bump google.golang.org/grpc from 1.57.0 to 1.57.1 in /tools ([#653](https://github.com/bpg/terraform-provider-proxmox/issues/653)) ([db9140d](https://github.com/bpg/terraform-provider-proxmox/commit/db9140d05ef71753c8a8e1310c259717fef6e417))
+* fix linter error ([#645](https://github.com/bpg/terraform-provider-proxmox/issues/645)) ([1056180](https://github.com/bpg/terraform-provider-proxmox/commit/1056180ca571ef171870be5e864461fb49732bdf))
+
+## [0.35.1](https://github.com/bpg/terraform-provider-proxmox/compare/v0.35.0...v0.35.1) (2023-10-22)
+
+
+### Bug Fixes
+
+* **vm:** better check for disk ownership ([#633](https://github.com/bpg/terraform-provider-proxmox/issues/633)) ([6753582](https://github.com/bpg/terraform-provider-proxmox/commit/6753582e4b1999fdf2fd9ea0f499c0cd0f7cd64c))
+* **vm:** set FileVolume for disks with file_id ([#635](https://github.com/bpg/terraform-provider-proxmox/issues/635)) ([d1d7bd3](https://github.com/bpg/terraform-provider-proxmox/commit/d1d7bd39c741d99b2395ef858bf739cb067f0542))
+
+
+### Miscellaneous
+
+* **deps:** bump github.com/golangci/golangci-lint from 1.54.2 to 1.55.0 in /tools ([#636](https://github.com/bpg/terraform-provider-proxmox/issues/636)) ([bcd33bb](https://github.com/bpg/terraform-provider-proxmox/commit/bcd33bb139d20ea4986d7dadf145e6ebbe497e79))
+
+## [0.35.0](https://github.com/bpg/terraform-provider-proxmox/compare/v0.34.0...v0.35.0) (2023-10-17)
+
+
+### Features
+
+* **vm:** add 'path_in_datastore' disk argument ([#606](https://github.com/bpg/terraform-provider-proxmox/issues/606)) ([aeb5e88](https://github.com/bpg/terraform-provider-proxmox/commit/aeb5e88bc9112686675c7058501fa9378b69af93))
+
+
+### Bug Fixes
+
+* **lxc:** unmarshal string/int vmid as int when read container status ([#622](https://github.com/bpg/terraform-provider-proxmox/issues/622)) ([b90445a](https://github.com/bpg/terraform-provider-proxmox/commit/b90445a12c31c970c1cd1d2f37508ffcee586bf8))
+* **provider:** add informative error around ssh-agent  ([#620](https://github.com/bpg/terraform-provider-proxmox/issues/620)) ([388ce7c](https://github.com/bpg/terraform-provider-proxmox/commit/388ce7ce8d37964da427d2430c9e03b14f790856))
+
+
+### Miscellaneous
+
+* **deps:** bump github.com/google/go-cmp from 0.5.9 to 0.6.0 ([#624](https://github.com/bpg/terraform-provider-proxmox/issues/624)) ([21e48c7](https://github.com/bpg/terraform-provider-proxmox/commit/21e48c7fb8aef8b5f5a48fea76ca9a030ccd59cc))
+* **deps:** bump golang.org/x/net from 0.13.0 to 0.17.0 ([#616](https://github.com/bpg/terraform-provider-proxmox/issues/616)) ([29894bd](https://github.com/bpg/terraform-provider-proxmox/commit/29894bda234baca2645fc5e0d5d6f05101406b18))
+* **deps:** bump golang.org/x/net from 0.15.0 to 0.17.0 in /tools ([#617](https://github.com/bpg/terraform-provider-proxmox/issues/617)) ([7287f5d](https://github.com/bpg/terraform-provider-proxmox/commit/7287f5de4801d0f56faa8e3b99c80d41ac2f1f01))
+
+## [0.34.0](https://github.com/bpg/terraform-provider-proxmox/compare/v0.33.0...v0.34.0) (2023-10-10)
+
+
+### Features
+
+* **lxc:** add support for the `start_on_boot` option ([#605](https://github.com/bpg/terraform-provider-proxmox/issues/605)) ([d36cf4e](https://github.com/bpg/terraform-provider-proxmox/commit/d36cf4eab81955184c926c86ce692bcf6c01b840))
+* **provider:** configure temp directory ([#607](https://github.com/bpg/terraform-provider-proxmox/issues/607)) ([06ad004](https://github.com/bpg/terraform-provider-proxmox/commit/06ad00463c8ec0426f72a559924e6a0adfe4e2a8))
+* **vm:** add option to enable multiqueue in network devices ([#614](https://github.com/bpg/terraform-provider-proxmox/issues/614)) ([be5251d](https://github.com/bpg/terraform-provider-proxmox/commit/be5251dd5ad535be6bdf8f9ef73c43f54a9dc2c7))
+
+
+### Bug Fixes
+
+* **lxc:** cloned container does not start by default ([#615](https://github.com/bpg/terraform-provider-proxmox/issues/615)) ([d5994a2](https://github.com/bpg/terraform-provider-proxmox/commit/d5994a2bd5323cef34b71f3fea895539a0cfccd8))
+* **lxc:** create container when authenticated with API token ([#610](https://github.com/bpg/terraform-provider-proxmox/issues/610)) ([32bdc94](https://github.com/bpg/terraform-provider-proxmox/commit/32bdc94167253b7b3ec6eaecbccc2d2cc0104b61))
+* **lxc:** multi-line description always shows as changed ([#611](https://github.com/bpg/terraform-provider-proxmox/issues/611)) ([088ad09](https://github.com/bpg/terraform-provider-proxmox/commit/088ad09e356e1baf17b7cb84656155d192d2909d))
+
+
+### Miscellaneous
+
+* **deps:** bump github.com/hashicorp/terraform-plugin-framework from 1.4.0 to 1.4.1 ([#612](https://github.com/bpg/terraform-provider-proxmox/issues/612)) ([a266496](https://github.com/bpg/terraform-provider-proxmox/commit/a266496fcbf9c044712896ea1af5827f47869be1))
+* **deps:** bump golang.org/x/crypto from 0.13.0 to 0.14.0 ([#613](https://github.com/bpg/terraform-provider-proxmox/issues/613)) ([0150a97](https://github.com/bpg/terraform-provider-proxmox/commit/0150a97cd4a2489311db943459f7d41b8ef8e61e))
+
+## [0.33.0](https://github.com/bpg/terraform-provider-proxmox/compare/v0.32.2...v0.33.0) (2023-10-02)
+
+
+### Features
+
+* **file:** add optional `overwrite` flag to the file resource ([#593](https://github.com/bpg/terraform-provider-proxmox/issues/593)) ([5e24a75](https://github.com/bpg/terraform-provider-proxmox/commit/5e24a75d09b930aef07a067b37be0507c1948de1))
+* **vm:** allow `scsi` and `sata` interfaces for CloudInit Drive ([#598](https://github.com/bpg/terraform-provider-proxmox/issues/598)) ([0b8f2e2](https://github.com/bpg/terraform-provider-proxmox/commit/0b8f2e2c6f80b0370290e6b32ba1e7add977018c))
+
+
+### Bug Fixes
+
+* **api:** set min TLS version 1.3, secure HTTP-only cookie ([#596](https://github.com/bpg/terraform-provider-proxmox/issues/596)) ([16ebf30](https://github.com/bpg/terraform-provider-proxmox/commit/16ebf30a79e8e3cc2df48787b210fd78950f8260))
+
+
+### Miscellaneous
+
+* **ci:** cleanup CI flows ([#595](https://github.com/bpg/terraform-provider-proxmox/issues/595)) ([bd09fd3](https://github.com/bpg/terraform-provider-proxmox/commit/bd09fd3d6ec954e6d2c8d01e51050faf5677d422))
+
+## [0.32.2](https://github.com/bpg/terraform-provider-proxmox/compare/v0.32.1...v0.32.2) (2023-09-28)
+
+
+### Bug Fixes
+
+* **tasks:** fix UPID (task id) parsing error ([#591](https://github.com/bpg/terraform-provider-proxmox/issues/591)) ([294a9da](https://github.com/bpg/terraform-provider-proxmox/commit/294a9daa8711f7a2dbb054f1de750bf9f1bb4f3a))
+
+
+### Miscellaneous
+
+* **deps:** bump github.com/goreleaser/goreleaser from 1.20.0 to 1.21.0 in /tools ([#587](https://github.com/bpg/terraform-provider-proxmox/issues/587)) ([2573323](https://github.com/bpg/terraform-provider-proxmox/commit/257332393f48dc2c5367c8934923bea28964ffdc))
+* **deps:** bump github.com/goreleaser/goreleaser from 1.21.0 to 1.21.2 in /tools ([#592](https://github.com/bpg/terraform-provider-proxmox/issues/592)) ([2621aad](https://github.com/bpg/terraform-provider-proxmox/commit/2621aadb5f089a88b6ddf027ce906c20031ee2a0))
+
 ## [0.32.1](https://github.com/bpg/terraform-provider-proxmox/compare/v0.32.0...v0.32.1) (2023-09-23)
 
 

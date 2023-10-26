@@ -25,11 +25,22 @@ type GetTaskStatusResponseData struct {
 	ExitCode string `json:"exitstatus,omitempty"`
 }
 
+// GetTaskLogResponseBody contains the body from a node get task log response.
+type GetTaskLogResponseBody struct {
+	Data []*GetTaskLogResponseData `json:"data,omitempty"`
+}
+
+// GetTaskLogResponseData contains the data from a node get task log response.
+type GetTaskLogResponseData struct {
+	LineNumber int    `json:"n,omitempty"`
+	LineText   string `json:"t,omitempty"`
+}
+
 // TaskID contains the components of a PVE task ID.
 type TaskID struct {
 	NodeName  string
-	PID       int
-	PStart    int
+	PID       int64
+	PStart    int64
 	StartTime time.Time
 	Type      string
 	ID        string
@@ -51,17 +62,17 @@ func ParseTaskID(taskID string) (TaskID, error) {
 		return TaskID{}, fmt.Errorf("missing node name in task ID: %s", taskID)
 	}
 
-	pid, err := strconv.ParseInt(parts[2], 16, 32)
+	pid, err := strconv.ParseInt(parts[2], 16, 64)
 	if err != nil {
 		return TaskID{}, fmt.Errorf("error parsing task ID: %w", err)
 	}
 
-	pstart, err := strconv.ParseInt(parts[3], 16, 32)
+	pstart, err := strconv.ParseInt(parts[3], 16, 64)
 	if err != nil {
 		return TaskID{}, fmt.Errorf("error parsing pstart in task ID: %q: %w", taskID, err)
 	}
 
-	stime, err := strconv.ParseInt(parts[4], 16, 32)
+	stime, err := strconv.ParseInt(parts[4], 16, 64)
 	if err != nil {
 		return TaskID{}, fmt.Errorf("error parsing start time in task ID: %q: %w", taskID, err)
 	}
@@ -76,8 +87,8 @@ func ParseTaskID(taskID string) (TaskID, error) {
 
 	return TaskID{
 		NodeName:  parts[1],
-		PID:       int(pid),
-		PStart:    int(pstart),
+		PID:       pid,
+		PStart:    pstart,
 		StartTime: time.Unix(stime, 0).UTC(),
 		Type:      parts[5],
 		ID:        parts[6],

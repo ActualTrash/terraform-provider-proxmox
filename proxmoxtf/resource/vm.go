@@ -104,6 +104,7 @@ const (
 	dvResourceVirtualEnvironmentVMNetworkDeviceEnabled              = true
 	dvResourceVirtualEnvironmentVMNetworkDeviceFirewall             = false
 	dvResourceVirtualEnvironmentVMNetworkDeviceModel                = "virtio"
+	dvResourceVirtualEnvironmentVMNetworkDeviceQueues               = 0
 	dvResourceVirtualEnvironmentVMNetworkDeviceRateLimit            = 0
 	dvResourceVirtualEnvironmentVMNetworkDeviceVLANID               = 0
 	dvResourceVirtualEnvironmentVMNetworkDeviceMTU                  = 0
@@ -123,6 +124,7 @@ const (
 	dvResourceVirtualEnvironmentVMTabletDevice                      = true
 	dvResourceVirtualEnvironmentVMTemplate                          = false
 	dvResourceVirtualEnvironmentVMTimeoutClone                      = 1800
+	dvResourceVirtualEnvironmentVMTimeoutCreate                     = 1800
 	dvResourceVirtualEnvironmentVMTimeoutMoveDisk                   = 1800
 	dvResourceVirtualEnvironmentVMTimeoutMigrate                    = 1800
 	dvResourceVirtualEnvironmentVMTimeoutReboot                     = 1800
@@ -176,6 +178,7 @@ const (
 	mkResourceVirtualEnvironmentVMDisk                              = "disk"
 	mkResourceVirtualEnvironmentVMDiskInterface                     = "interface"
 	mkResourceVirtualEnvironmentVMDiskDatastoreID                   = "datastore_id"
+	mkResourceVirtualEnvironmentVMDiskPathInDatastore               = "path_in_datastore"
 	mkResourceVirtualEnvironmentVMDiskFileFormat                    = "file_format"
 	mkResourceVirtualEnvironmentVMDiskFileID                        = "file_id"
 	mkResourceVirtualEnvironmentVMDiskSize                          = "size"
@@ -242,6 +245,7 @@ const (
 	mkResourceVirtualEnvironmentVMNetworkDeviceFirewall             = "firewall"
 	mkResourceVirtualEnvironmentVMNetworkDeviceMACAddress           = "mac_address"
 	mkResourceVirtualEnvironmentVMNetworkDeviceModel                = "model"
+	mkResourceVirtualEnvironmentVMNetworkDeviceQueues               = "queues"
 	mkResourceVirtualEnvironmentVMNetworkDeviceRateLimit            = "rate_limit"
 	mkResourceVirtualEnvironmentVMNetworkDeviceVLANID               = "vlan_id"
 	mkResourceVirtualEnvironmentVMNetworkDeviceMTU                  = "mtu"
@@ -269,6 +273,7 @@ const (
 	mkResourceVirtualEnvironmentVMTags                              = "tags"
 	mkResourceVirtualEnvironmentVMTemplate                          = "template"
 	mkResourceVirtualEnvironmentVMTimeoutClone                      = "timeout_clone"
+	mkResourceVirtualEnvironmentVMTimeoutCreate                     = "timeout_create"
 	mkResourceVirtualEnvironmentVMTimeoutMoveDisk                   = "timeout_move_disk"
 	mkResourceVirtualEnvironmentVMTimeoutMigrate                    = "timeout_migrate"
 	mkResourceVirtualEnvironmentVMTimeoutReboot                     = "timeout_reboot"
@@ -281,8 +286,6 @@ const (
 	mkResourceVirtualEnvironmentVMVGAType                           = "type"
 	mkResourceVirtualEnvironmentVMVMID                              = "vm_id"
 	mkResourceVirtualEnvironmentVMSCSIHardware                      = "scsi_hardware"
-
-	vmCreateTimeoutSeconds = 10
 )
 
 // VM returns a resource that manages VMs.
@@ -597,14 +600,15 @@ func VM() *schema.Resource {
 				DefaultFunc: func() (interface{}, error) {
 					return []interface{}{
 						map[string]interface{}{
-							mkResourceVirtualEnvironmentVMDiskDatastoreID: dvResourceVirtualEnvironmentVMDiskDatastoreID,
-							mkResourceVirtualEnvironmentVMDiskFileID:      dvResourceVirtualEnvironmentVMDiskFileID,
-							mkResourceVirtualEnvironmentVMDiskInterface:   dvResourceVirtualEnvironmentVMDiskInterface,
-							mkResourceVirtualEnvironmentVMDiskSize:        dvResourceVirtualEnvironmentVMDiskSize,
-							mkResourceVirtualEnvironmentVMDiskIOThread:    dvResourceVirtualEnvironmentVMDiskIOThread,
-							mkResourceVirtualEnvironmentVMDiskSSD:         dvResourceVirtualEnvironmentVMDiskSSD,
-							mkResourceVirtualEnvironmentVMDiskDiscard:     dvResourceVirtualEnvironmentVMDiskDiscard,
-							mkResourceVirtualEnvironmentVMDiskCache:       dvResourceVirtualEnvironmentVMDiskCache,
+							mkResourceVirtualEnvironmentVMDiskDatastoreID:     dvResourceVirtualEnvironmentVMDiskDatastoreID,
+							mkResourceVirtualEnvironmentVMDiskPathInDatastore: nil,
+							mkResourceVirtualEnvironmentVMDiskFileID:          dvResourceVirtualEnvironmentVMDiskFileID,
+							mkResourceVirtualEnvironmentVMDiskInterface:       dvResourceVirtualEnvironmentVMDiskInterface,
+							mkResourceVirtualEnvironmentVMDiskSize:            dvResourceVirtualEnvironmentVMDiskSize,
+							mkResourceVirtualEnvironmentVMDiskIOThread:        dvResourceVirtualEnvironmentVMDiskIOThread,
+							mkResourceVirtualEnvironmentVMDiskSSD:             dvResourceVirtualEnvironmentVMDiskSSD,
+							mkResourceVirtualEnvironmentVMDiskDiscard:         dvResourceVirtualEnvironmentVMDiskDiscard,
+							mkResourceVirtualEnvironmentVMDiskCache:           dvResourceVirtualEnvironmentVMDiskCache,
 						},
 					}, nil
 				},
@@ -620,6 +624,13 @@ func VM() *schema.Resource {
 							Description: "The datastore id",
 							Optional:    true,
 							Default:     dvResourceVirtualEnvironmentVMDiskDatastoreID,
+						},
+						mkResourceVirtualEnvironmentVMDiskPathInDatastore: {
+							Type:        schema.TypeString,
+							Description: "The in-datastore path to disk image",
+							Computed:    true,
+							Optional:    true,
+							Default:     nil,
 						},
 						mkResourceVirtualEnvironmentVMDiskFileFormat: {
 							Type:             schema.TypeString,
@@ -1163,6 +1174,13 @@ func VM() *schema.Resource {
 							Default:          dvResourceVirtualEnvironmentVMNetworkDeviceModel,
 							ValidateDiagFunc: validator.NetworkDeviceModel(),
 						},
+						mkResourceVirtualEnvironmentVMNetworkDeviceQueues: {
+							Type:             schema.TypeInt,
+							Description:      "Number of packet queues to be used on the device",
+							Optional:         true,
+							Default:          dvResourceVirtualEnvironmentVMNetworkDeviceQueues,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 64)),
+						},
 						mkResourceVirtualEnvironmentVMNetworkDeviceRateLimit: {
 							Type:        schema.TypeFloat,
 							Description: "The rate limit in megabytes per second",
@@ -1379,6 +1397,12 @@ func VM() *schema.Resource {
 				Description: "Clone VM timeout",
 				Optional:    true,
 				Default:     dvResourceVirtualEnvironmentVMTimeoutClone,
+			},
+			mkResourceVirtualEnvironmentVMTimeoutCreate: {
+				Type:        schema.TypeInt,
+				Description: "Create VM timeout",
+				Optional:    true,
+				Default:     dvResourceVirtualEnvironmentVMTimeoutCreate,
 			},
 			mkResourceVirtualEnvironmentVMTimeoutMoveDisk: {
 				Type:        schema.TypeInt,
@@ -1602,16 +1626,26 @@ func deleteIdeDrives(ctx context.Context, vmAPI *vms.Client, itf1 string, itf2 s
 
 // Start the VM, then wait for it to actually start; it may not be started immediately if running in HA mode.
 func vmStart(ctx context.Context, vmAPI *vms.Client, d *schema.ResourceData) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	tflog.Debug(ctx, "Starting VM")
 
 	startVMTimeout := d.Get(mkResourceVirtualEnvironmentVMTimeoutStartVM).(int)
 
-	e := vmAPI.StartVM(ctx, startVMTimeout)
+	log, e := vmAPI.StartVM(ctx, startVMTimeout)
 	if e != nil {
-		return diag.FromErr(e)
+		return append(diags, diag.FromErr(e)...)
 	}
 
-	return diag.FromErr(vmAPI.WaitForVMState(ctx, "running", startVMTimeout, 1))
+	if len(log) > 0 {
+		lines := "\n\t| " + strings.Join(log, "\n\t| ")
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  fmt.Sprintf("the VM startup task finished with a warning, task log:\n%s", lines),
+		})
+	}
+
+	return append(diags, diag.FromErr(vmAPI.WaitForVMState(ctx, "running", startVMTimeout, 1))...)
 }
 
 // Shutdown the VM, then wait for it to actually shut down (it may not be shut down immediately if
@@ -2592,7 +2626,9 @@ func vmCreateCustom(ctx context.Context, d *schema.ResourceData, m interface{}) 
 		createBody.PoolID = &poolID
 	}
 
-	err = api.Node(nodeName).VM(0).CreateVM(ctx, createBody, vmCreateTimeoutSeconds)
+	createTimeout := d.Get(mkResourceVirtualEnvironmentVMTimeoutClone).(int)
+
+	err = api.Node(nodeName).VM(0).CreateVM(ctx, createBody, createTimeout)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -3007,6 +3043,12 @@ func vmGetDiskDeviceObjects(
 
 		block := diskEntry.(map[string]interface{})
 		datastoreID, _ := block[mkResourceVirtualEnvironmentVMDiskDatastoreID].(string)
+		pathInDatastore := ""
+
+		if untyped, hasPathInDatastore := block[mkResourceVirtualEnvironmentVMDiskPathInDatastore]; hasPathInDatastore {
+			pathInDatastore = untyped.(string)
+		}
+
 		fileFormat, _ := block[mkResourceVirtualEnvironmentVMDiskFileFormat].(string)
 		fileID, _ := block[mkResourceVirtualEnvironmentVMDiskFileID].(string)
 		size, _ := block[mkResourceVirtualEnvironmentVMDiskSize].(int)
@@ -3032,6 +3074,15 @@ func vmGetDiskDeviceObjects(
 		}
 		if fileID != "" {
 			diskDevice.Enabled = false
+		}
+
+		if pathInDatastore != "" {
+			if datastoreID != "" {
+				diskDevice.FileVolume = fmt.Sprintf("%s:%s", datastoreID, pathInDatastore)
+			} else {
+				// FileVolume is absolute path in the host filesystem
+				diskDevice.FileVolume = pathInDatastore
+			}
 		} else {
 			diskDevice.FileVolume = fmt.Sprintf("%s:%d", datastoreID, size)
 		}
@@ -3215,6 +3266,7 @@ func vmGetNetworkDeviceObjects(d *schema.ResourceData) vms.CustomNetworkDevices 
 		firewall := types.CustomBool(block[mkResourceVirtualEnvironmentVMNetworkDeviceFirewall].(bool))
 		macAddress := block[mkResourceVirtualEnvironmentVMNetworkDeviceMACAddress].(string)
 		model := block[mkResourceVirtualEnvironmentVMNetworkDeviceModel].(string)
+		queues := block[mkResourceVirtualEnvironmentVMNetworkDeviceQueues].(int)
 		rateLimit := block[mkResourceVirtualEnvironmentVMNetworkDeviceRateLimit].(float64)
 		vlanID := block[mkResourceVirtualEnvironmentVMNetworkDeviceVLANID].(int)
 		mtu := block[mkResourceVirtualEnvironmentVMNetworkDeviceMTU].(int)
@@ -3231,6 +3283,10 @@ func vmGetNetworkDeviceObjects(d *schema.ResourceData) vms.CustomNetworkDevices 
 
 		if macAddress != "" {
 			device.MACAddress = &macAddress
+		}
+
+		if queues != 0 {
+			device.Queues = &queues
 		}
 
 		if rateLimit != 0 {
@@ -3792,30 +3848,44 @@ func vmReadCustom(
 	diskObjects := getDiskInfo(vmConfig, d)
 
 	for di, dd := range diskObjects {
-		disk := map[string]interface{}{}
-
 		if dd == nil || dd.FileVolume == "none" || strings.HasPrefix(di, "ide") {
 			continue
 		}
 
-		fileIDParts := strings.Split(dd.FileVolume, ":")
+		if strings.HasSuffix(dd.FileVolume, fmt.Sprintf("vm-%d-cloudinit", vmID)) {
+			continue
+		}
 
-		disk[mkResourceVirtualEnvironmentVMDiskDatastoreID] = fileIDParts[0]
+		disk := map[string]interface{}{}
+
+		datastoreID, pathInDatastore, hasDatastoreID := strings.Cut(dd.FileVolume, ":")
+		if !hasDatastoreID {
+			// when no ':' separator is found, 'Cut' places the whole string to 'datastoreID',
+			// we want it in 'pathInDatastore' (it is absolute filesystem path)
+			pathInDatastore = datastoreID
+			datastoreID = ""
+		}
+
+		disk[mkResourceVirtualEnvironmentVMDiskDatastoreID] = datastoreID
+		disk[mkResourceVirtualEnvironmentVMDiskPathInDatastore] = pathInDatastore
 
 		if dd.Format == nil {
 			disk[mkResourceVirtualEnvironmentVMDiskFileFormat] = dvResourceVirtualEnvironmentVMDiskFileFormat
-			// disk format may not be returned by config API if it is default for the storage, and that may be different
-			// from the default qcow2, so we need to read it from the storage API to make sure we have the correct value
-			files, err := api.Node(nodeName).ListDatastoreFiles(ctx, fileIDParts[0])
-			if err != nil {
-				diags = append(diags, diag.FromErr(err)...)
-				continue
-			}
 
-			for _, v := range files {
-				if v.VolumeID == dd.FileVolume {
-					disk[mkResourceVirtualEnvironmentVMDiskFileFormat] = v.FileFormat
-					break
+			if datastoreID != "" {
+				// disk format may not be returned by config API if it is default for the storage, and that may be different
+				// from the default qcow2, so we need to read it from the storage API to make sure we have the correct value
+				files, err := api.Node(nodeName).ListDatastoreFiles(ctx, datastoreID)
+				if err != nil {
+					diags = append(diags, diag.FromErr(err)...)
+					continue
+				}
+
+				for _, v := range files {
+					if v.VolumeID == dd.FileVolume {
+						disk[mkResourceVirtualEnvironmentVMDiskFileFormat] = v.FileFormat
+						break
+					}
 				}
 			}
 		} else {
@@ -4303,6 +4373,12 @@ func vmReadCustom(
 
 			networkDevice[mkResourceVirtualEnvironmentVMNetworkDeviceMACAddress] = macAddresses[ni]
 			networkDevice[mkResourceVirtualEnvironmentVMNetworkDeviceModel] = nd.Model
+
+			if nd.Queues != nil {
+				networkDevice[mkResourceVirtualEnvironmentVMNetworkDeviceQueues] = *nd.Queues
+			} else {
+				networkDevice[mkResourceVirtualEnvironmentVMNetworkDeviceQueues] = 0
+			}
 
 			if nd.RateLimit != nil {
 				networkDevice[mkResourceVirtualEnvironmentVMNetworkDeviceRateLimit] = *nd.RateLimit
@@ -5581,29 +5657,48 @@ func vmUpdateDiskLocationAndSize(
 				}
 
 				if *oldDisk.ID != *diskNewEntries[prefix][oldKey].ID {
-					deleteOriginalDisk := types.CustomBool(true)
+					if oldDisk.IsOwnedBy(vmID) {
+						deleteOriginalDisk := types.CustomBool(true)
 
-					diskMoveBodies = append(
-						diskMoveBodies,
-						&vms.MoveDiskRequestBody{
-							DeleteOriginalDisk: &deleteOriginalDisk,
-							Disk:               *oldDisk.Interface,
-							TargetStorage:      *diskNewEntries[prefix][oldKey].ID,
-						},
-					)
+						diskMoveBodies = append(
+							diskMoveBodies,
+							&vms.MoveDiskRequestBody{
+								DeleteOriginalDisk: &deleteOriginalDisk,
+								Disk:               *oldDisk.Interface,
+								TargetStorage:      *diskNewEntries[prefix][oldKey].ID,
+							},
+						)
 
-					// Cannot be done while VM is running.
-					shutdownForDisksRequired = true
+						// Cannot be done while VM is running.
+						shutdownForDisksRequired = true
+					} else {
+						return diag.Errorf(
+							"Cannot move %s:%s to datastore %s in VM %d configuration, it is not owned by this VM!",
+							*oldDisk.ID,
+							*oldDisk.PathInDatastore(),
+							*diskNewEntries[prefix][oldKey].ID,
+							vmID,
+						)
+					}
 				}
 
 				if *oldDisk.SizeInt < *diskNewEntries[prefix][oldKey].SizeInt {
-					diskResizeBodies = append(
-						diskResizeBodies,
-						&vms.ResizeDiskRequestBody{
-							Disk: *oldDisk.Interface,
-							Size: *diskNewEntries[prefix][oldKey].Size,
-						},
-					)
+					if oldDisk.IsOwnedBy(vmID) {
+						diskResizeBodies = append(
+							diskResizeBodies,
+							&vms.ResizeDiskRequestBody{
+								Disk: *oldDisk.Interface,
+								Size: *diskNewEntries[prefix][oldKey].Size,
+							},
+						)
+					} else {
+						return diag.Errorf(
+							"Cannot resize %s:%s in VM %d configuration, it is not owned by this VM!",
+							*oldDisk.ID,
+							*oldDisk.PathInDatastore(),
+							vmID,
+						)
+					}
 				}
 			}
 		}

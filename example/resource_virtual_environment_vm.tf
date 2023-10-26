@@ -7,10 +7,12 @@ resource "proxmox_virtual_environment_vm" "example_template" {
     enabled = true
   }
 
+  bios        = "ovmf"
   description = "Managed by Terraform"
 
   cpu {
-    numa = true
+    cores = 2
+    numa  = true
   }
 
   smbios {
@@ -56,7 +58,7 @@ resource "proxmox_virtual_environment_vm" "example_template" {
 
   initialization {
     datastore_id = local.datastore_id
-    # interface = "ide2"
+    interface    = "scsi4"
 
     dns {
       server = "1.1.1.1"
@@ -76,10 +78,12 @@ resource "proxmox_virtual_environment_vm" "example_template" {
     meta_data_file_id   = proxmox_virtual_environment_file.meta_config.id
   }
 
-  name = "terraform-provider-proxmox-example-template"
+  machine = "q35"
+  name    = "terraform-provider-proxmox-example-template"
 
   network_device {
-    mtu = 1450
+    mtu    = 1450
+    queues = 2
   }
 
   network_device {
@@ -113,6 +117,8 @@ resource "proxmox_virtual_environment_vm" "example" {
     vm_id = proxmox_virtual_environment_vm.example_template.id
   }
 
+  machine = "q35"
+
   memory {
     dedicated = 768
   }
@@ -135,7 +141,7 @@ resource "proxmox_virtual_environment_vm" "example" {
     // if unspecified:
     //   - autodetected if there is a cloud-init device on the template
     //   - otherwise defaults to ide2
-    interface = "ide0"
+    interface = "scsi4"
 
     dns {
       server = "8.8.8.8"
@@ -158,6 +164,40 @@ resource "proxmox_virtual_environment_vm" "example" {
   #  mapping = "gpu"
   #  pcie = true
   #}
+
+  # attached disks from data_vm
+  dynamic "disk" {
+    for_each = {for idx, val in proxmox_virtual_environment_vm.data_vm.disk : idx => val}
+    iterator = data_disk
+    content {
+      datastore_id      = data_disk.value["datastore_id"]
+      path_in_datastore = data_disk.value["path_in_datastore"]
+      file_format       = data_disk.value["file_format"]
+      size              = data_disk.value["size"]
+      # assign from scsi1 and up
+      interface         = "scsi${data_disk.key + 1}"
+    }
+  }
+}
+
+resource "proxmox_virtual_environment_vm" "data_vm" {
+  name      = "terraform-provider-proxmox-data-vm"
+  node_name = data.proxmox_virtual_environment_nodes.example.names[0]
+  started   = false
+  on_boot   = false
+
+  disk {
+    datastore_id = local.datastore_id
+    file_format  = "raw"
+    interface    = "scsi0"
+    size         = 1
+  }
+  disk {
+    datastore_id = local.datastore_id
+    file_format  = "raw"
+    interface    = "scsi1"
+    size         = 4
+  }
 }
 
 output "resource_proxmox_virtual_environment_vm_example_id" {
