@@ -11,6 +11,8 @@ subcategory: Virtual Environment
 
 Manages a virtual machine.
 
+> This resource uses SSH access to the node. You might need to configure the [`ssh` option in the `provider` section](../index.md#node-ip-address-used-for-ssh-connection).
+
 ## Example Usage
 
 ```terraform
@@ -23,7 +25,8 @@ resource "proxmox_virtual_environment_vm" "ubuntu_vm" {
   vm_id     = 4321
 
   agent {
-    enabled = true
+    # read 'Qemu guest agent' section, change to true only when ready
+    enabled = false
   }
 
   startup {
@@ -157,7 +160,7 @@ output "ubuntu_vm_public_key" {
           AMD CPUs, best used with "virt-ssbd".
         - `+hv-evmcs`/`-hv-evmcs` - Improve performance for nested
           virtualization (only supported on Intel CPUs).
-        - `+hv-tlbflush`/`-hv-tlbflush` - Improve performance in overcommitted  
+        - `+hv-tlbflush`/`-hv-tlbflush` - Improve performance in overcommitted
           Windows guests (may lead to guest BSOD on old CPUs).
         - `+ibpb`/`-ibpb` - Allows improved Spectre mitigation on AMD CPUs.
         - `+md-clear`/`-md-clear` - Required to let the guest OS know if MDS is
@@ -287,7 +290,9 @@ output "ubuntu_vm_public_key" {
 - `hostpci` - (Optional) A host PCI device mapping (multiple blocks supported).
     - `device` - (Required) The PCI device name for Proxmox, in form
       of `hostpciX` where `X` is a sequential number from 0 to 3.
-    - `id` - (Optional) The PCI device ID. Use either this or `mapping`.
+    - `id` - (Optional) The PCI device ID. This parameter is not compatible
+      with `api_token` and requires the root `username` and `password`
+      configured in the proxmox provider. Use either this or `mapping`.
     - `mapping` - (Optional) The resource mapping name of the device, for
       example gpu. Use either this or `id`.
     - `mdev` - (Optional) The mediated device ID to use.
@@ -300,6 +305,12 @@ output "ubuntu_vm_public_key" {
       is a relative path under `/usr/share/kvm/`.
     - `xvga` - (Optional) Marks the PCI(e) device as the primary GPU of the VM.
       With this enabled the `vga` configuration argument will be ignored.
+- `usb` - (Optional) A host USB device mapping (multiple blocks supported).
+    - `host` - (Optional) The USB device ID. Use either this or `mapping`.
+    - `mapping` - (Optional) The resource mapping name of the device, for
+      example usbdevice. Use either this or `id`.
+    - `usb3` - (Optional) Makes the USB device a USB3 device for the VM (defaults
+      to `false`).
 - `initialization` - (Optional) The cloud-init configuration.
     - `datastore_id` - (Optional) The identifier for the datastore to create the
       cloud-init disk in (defaults to `local-lvm`).
@@ -313,13 +324,15 @@ output "ubuntu_vm_public_key" {
     - `ip_config` - (Optional) The IP configuration (one block per network
       device).
         - `ipv4` - (Optional) The IPv4 configuration.
-            - `address` - (Optional) The IPv4 address (use `dhcp` for
-              autodiscovery).
+            - `address` - (Optional) The IPv4 address in CIDR notation
+              (e.g. 192.168.2.2/24).  Alternatively, set this to `dhcp` for
+              autodiscovery.
             - `gateway` - (Optional) The IPv4 gateway (must be omitted
               when `dhcp` is used as the address).
         - `ipv6` - (Optional) The IPv4 configuration.
-            - `address` - (Optional) The IPv6 address (use `dhcp` for
-              autodiscovery).
+            - `address` - (Optional) The IPv6 address in CIDR notation
+              (e.g. fd1c:000:0000::0000:000:7334/64).  Alternatively, set this
+              to `dhcp` for autodiscovery.
             - `gateway` - (Optional) The IPv6 gateway (must be omitted
               when `dhcp` is used as the address).
     - `user_account` - (Optional) The user account configuration (conflicts
@@ -363,8 +376,8 @@ output "ubuntu_vm_public_key" {
     - `sv` - Swedish.
     - `tr` - Turkish.
 - `kvm_arguments` - (Optional) Arbitrary arguments passed to kvm.
-- `machine` - (Optional) The VM machine type (defaults to `i440fx`).
-    - `i440fx` - Standard PC (i440FX + PIIX, 1996).
+- `machine` - (Optional) The VM machine type (defaults to `pc`).
+    - `pc` - Standard PC (i440FX + PIIX, 1996).
     - `q35` - Standard PC (Q35 + ICH9, 2009).
 - `memory` - (Optional) The memory configuration.
     - `dedicated` - (Optional) The dedicated memory in megabytes (defaults
@@ -409,6 +422,7 @@ output "ubuntu_vm_public_key" {
         - `win7` - Windows 7.
         - `win8` - Windows 8, 2012 or 2012 R2.
         - `win10` - Windows 10 or 2016.
+        - `win11` - Windows 11
         - `wvista` - Windows Vista.
         - `wxp` - Windows XP.
 - `pool_id` - (Optional) The identifier for a pool to assign the virtual machine
@@ -498,6 +512,44 @@ output "ubuntu_vm_public_key" {
 - `network_interface_names` - The network interface names published by the QEMU
   agent (empty list when `agent.enabled` is `false`)
 
+## Qemu guest agent
+
+Qemu-guest-agent is an application which can be installed inside guest VM, see
+[Proxmox Wiki](https://pve.proxmox.com/wiki/Qemu-guest-agent) and [Proxmox
+Documentation](https://pve.proxmox.com/pve-docs/pve-admin-guide.html#qm_qemu_agent)
+
+For VM with `agent.enabled = false`, Proxmox uses ACPI for `Shutdown` and
+`Reboot`, and `qemu-guest-agent` is not needed inside the VM.
+
+Setting `agent.enabled = true` informs Proxmox that the guest agent is expected
+to be *running* inside the VM. Proxmox then uses `qemu-guest-agent` instead of
+ACPI to control the VM. If the agent is not running, Proxmox operations
+`Shutdown` and `Reboot` time out and fail. The failing operation gets a lock on
+the VM, and until the operation times out, other operations like `Stop` and
+`Reboot` cannot be used.
+
+Do **not** run VM with `agent.enabled = true`, unless the VM is configured to
+automatically **start** `qemu-guest-agent` at some point.
+
+"Monitor" tab in Proxmox GUI can be used to send low-level commands to `qemu`.
+See the [documentation](https://www.qemu.org/docs/master/system/monitor.html).
+Commands `system_powerdown` and `quit` have proven useful in shutting down VMs
+with `agent.enabled = true` and no agent running.
+
+Cloud images usually do not have `qemu-guest-agent` installed. It is possible to
+install and *start* it using cloud-init, e.g. using custom `user_data_file_id`
+file.
+
+This provider requires `agent.enabled = true` to populate `ipv4_addresses`,
+`ipv6_addresses` and `network_interface_names` output attributes.
+
+Setting `agent.enabled = true` without running `qemu-guest-agent` in the VM will
+also result in long timeouts when using the provider, both when creating VMs,
+and when refreshing resources.  The provider has no way to distinguish between
+"qemu-guest-agent not installed" and "very long boot due to a disk check", it
+trusts the user to set `agent.enabled` correctly and waits for
+`qemu-guest-agent` to start.
+
 ## Important Notes
 
 When cloning an existing virtual machine, whether it's a template or not, the
@@ -548,14 +600,14 @@ resource "proxmox_virtual_environment_vm" "data_vm" {
     datastore_id = "local-zfs"
     file_format  = "raw"
     interface    = "scsi0"
-    size         = 1 
+    size         = 1
   }
 
   disk {
     datastore_id = "local-zfs"
     file_format  = "raw"
     interface    = "scsi1"
-    size         = 4 
+    size         = 4
   }
 }
 
@@ -565,7 +617,7 @@ resource "proxmox_virtual_environment_vm" "data_user_vm" {
     datastore_id = "local-zfs"
     file_format  = "raw"
     interface    = "scsi0"
-    size         = 8 
+    size         = 8
   }
 
   # attached disks from data_vm
@@ -578,7 +630,7 @@ resource "proxmox_virtual_environment_vm" "data_user_vm" {
       file_format       = data_disk.value["file_format"]
       size              = data_disk.value["size"]
       # assign from scsi1 and up
-      interface         = "scsi${data_disk.key + 1}" 
+      interface         = "scsi${data_disk.key + 1}"
     }
   }
 

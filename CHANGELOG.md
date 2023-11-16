@@ -1,5 +1,50 @@
 # Changelog
 
+## [0.37.1](https://github.com/bpg/terraform-provider-proxmox/compare/v0.37.0...v0.37.1) (2023-11-12)
+
+
+### Bug Fixes
+
+* **docs:** add SSH info box to ressources needing it ([#690](https://github.com/bpg/terraform-provider-proxmox/issues/690)) ([e45c1c8](https://github.com/bpg/terraform-provider-proxmox/commit/e45c1c81263c723d1665c26c36d57f8c570b6ca3))
+* **file:** display warning if directory is not found ([#703](https://github.com/bpg/terraform-provider-proxmox/issues/703)) ([e10b4b5](https://github.com/bpg/terraform-provider-proxmox/commit/e10b4b561793fd462f18ff1aa616b62ccfe586f2))
+* **provider:** do not blindly use first IP for SSH ([#704](https://github.com/bpg/terraform-provider-proxmox/issues/704)) ([a586d03](https://github.com/bpg/terraform-provider-proxmox/commit/a586d0381e9c892b4b9aa2a0699f6c039c151ad2))
+* **provider:** sanitize PVE endpoint value ([#686](https://github.com/bpg/terraform-provider-proxmox/issues/686)) ([3f582d8](https://github.com/bpg/terraform-provider-proxmox/commit/3f582d816334d4db370e8a5124f27ae4842c93f1))
+* **storage:** unmarshal error when list storage containing large files ([#688](https://github.com/bpg/terraform-provider-proxmox/issues/688)) ([64c67d9](https://github.com/bpg/terraform-provider-proxmox/commit/64c67d947362e2653feaab7fa9ffb3b6016d0650))
+* **vm:** update validation and docs for `machine` attribute ([#681](https://github.com/bpg/terraform-provider-proxmox/issues/681)) ([3fd6b6b](https://github.com/bpg/terraform-provider-proxmox/commit/3fd6b6b2ce36fa4bead31fa737f1137cd43cc16e))
+
+
+### Miscellaneous
+
+* **build:** add devcontainer ([#699](https://github.com/bpg/terraform-provider-proxmox/issues/699)) ([5bf9d1b](https://github.com/bpg/terraform-provider-proxmox/commit/5bf9d1b9da7359d3cc38ac123cfeb0629f215eca))
+* **deps:** bump github.com/golangci/golangci-lint from 1.55.1 to 1.55.2 in /tools ([#680](https://github.com/bpg/terraform-provider-proxmox/issues/680)) ([2b8fd1a](https://github.com/bpg/terraform-provider-proxmox/commit/2b8fd1ad48540ad4552ab54b28e1d12379703c77))
+* **deps:** bump github.com/goreleaser/goreleaser from 1.21.2 to 1.22.1 in /tools ([#709](https://github.com/bpg/terraform-provider-proxmox/issues/709)) ([48c89ff](https://github.com/bpg/terraform-provider-proxmox/commit/48c89ffe1327fe29ff8ccb22d298153d44d7669a))
+* **deps:** bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.29.0 to 2.30.0 ([#708](https://github.com/bpg/terraform-provider-proxmox/issues/708)) ([817e43c](https://github.com/bpg/terraform-provider-proxmox/commit/817e43c912134be89c389cce1e718922ab993dde))
+* **deps:** bump github.com/sigstore/cosign/v2 from 2.0.3-0.20230523133326-0544abd8fc8a to 2.2.1 in /tools ([#705](https://github.com/bpg/terraform-provider-proxmox/issues/705)) ([3e6fe4d](https://github.com/bpg/terraform-provider-proxmox/commit/3e6fe4db5598bfe475a0a844c3bd5937bc83aec3))
+* **docs:** update hostpci id to mentions requirement around root user ([#710](https://github.com/bpg/terraform-provider-proxmox/issues/710)) ([0bf3a2a](https://github.com/bpg/terraform-provider-proxmox/commit/0bf3a2aea3d8d5e2821a24b3613bc44cd60b7b2d))
+* **docs:** update VM ip address to mention the CIDR suffic requirement ([#697](https://github.com/bpg/terraform-provider-proxmox/issues/697)) ([d61cdc2](https://github.com/bpg/terraform-provider-proxmox/commit/d61cdc2b5c7efa50cc8228d5cebf789cc3f1cb5e))
+
+## [0.37.0](https://github.com/bpg/terraform-provider-proxmox/compare/v0.36.0...v0.37.0) (2023-10-31)
+
+
+### Features
+
+* **vm:** add support for USB devices passthrough ([#666](https://github.com/bpg/terraform-provider-proxmox/issues/666)) ([cec4e65](https://github.com/bpg/terraform-provider-proxmox/commit/cec4e6586834feb876321520b93caf7ce4cb68d7))
+
+
+### Bug Fixes
+
+* **docs:** document qemu-guest-agent behavior ([#670](https://github.com/bpg/terraform-provider-proxmox/issues/670)) ([e2e5b4e](https://github.com/bpg/terraform-provider-proxmox/commit/e2e5b4e3441f46fbaef36751c6e5a6d1bc5ad671))
+* **docs:** update `README.md` and file resource documentation ([#659](https://github.com/bpg/terraform-provider-proxmox/issues/659)) ([f6f05a5](https://github.com/bpg/terraform-provider-proxmox/commit/f6f05a56e4c9296491044ec8d5d0215a44da6f56))
+* **vm:** MAC address validator should allow lowercase hex ([#660](https://github.com/bpg/terraform-provider-proxmox/issues/660)) ([7867e66](https://github.com/bpg/terraform-provider-proxmox/commit/7867e66d531484815b529fcdf0b8607fa837dc89))
+
+
+### Miscellaneous
+
+* **deps:** bump github.com/docker/docker from 24.0.2+incompatible to 24.0.7+incompatible in /tools ([#667](https://github.com/bpg/terraform-provider-proxmox/issues/667)) ([aea4a6f](https://github.com/bpg/terraform-provider-proxmox/commit/aea4a6f1cb0848a3274799dc605446c96dc192df))
+* **deps:** bump github.com/golangci/golangci-lint from 1.55.0 to 1.55.1 in /tools ([#664](https://github.com/bpg/terraform-provider-proxmox/issues/664)) ([6ab1d5f](https://github.com/bpg/terraform-provider-proxmox/commit/6ab1d5fffbe265291e2991db162fb68fd1b50b02))
+* **deps:** bump github.com/google/uuid from 1.3.1 to 1.4.0 ([#662](https://github.com/bpg/terraform-provider-proxmox/issues/662)) ([0ec8c24](https://github.com/bpg/terraform-provider-proxmox/commit/0ec8c2498b56a7f3d206409590f943e6764f8586))
+* **deps:** bump github.com/hashicorp/terraform-plugin-framework from 1.4.1 to 1.4.2 ([#663](https://github.com/bpg/terraform-provider-proxmox/issues/663)) ([b389080](https://github.com/bpg/terraform-provider-proxmox/commit/b38908063f523fc5738a9e1c987b848b80ecb5d3))
+
 ## [0.36.0](https://github.com/bpg/terraform-provider-proxmox/compare/v0.35.1...v0.36.0) (2023-10-26)
 
 

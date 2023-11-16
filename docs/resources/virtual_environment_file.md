@@ -13,17 +13,41 @@ Manages a file.
 
 ## Example Usage
 
+### Backups
+
+-> **Note:** The resource with this content type uses SSH access to the node. You might need to configure the [`ssh` option in the `provider` section](../index.md#node-ip-address-used-for-ssh-connection).
+
 ```terraform
-resource "proxmox_virtual_environment_file" "ubuntu_container_template" {
-  content_type = "vztmpl"
+resource "proxmox_virtual_environment_file" "backup" {
+  content_type = "backup"
   datastore_id = "local"
-  node_name    = "first-node"
+  node_name    = "pve"
 
   source_file {
-    path = "https://download.proxmox.com/images/system/ubuntu-20.04-standard_20.04-1_amd64.tar.gz"
+    path = "vzdump-lxc-100-2023_11_08-23_10_05.tar"
   }
 }
 ```
+
+### Images
+
+```terraform
+resource "proxmox_virtual_environment_file" "ubuntu_container_template" {
+  content_type = "iso"
+  datastore_id = "local"
+  node_name    = "pve"
+
+  source_file {
+    path = "https://cloud-images.ubuntu.com/jammy/20230929/jammy-server-cloudimg-amd64-disk-kvm.img"
+  }
+}
+```
+
+### Snippets
+
+-> **Note:**  Snippets are not enabled by default in new Proxmox installations. You need to enable them in the 'Datacenter>Storage' section of the proxmox interface before first using this resource.
+
+-> **Note:** The resource with this content type uses SSH access to the node. You might need to configure the [`ssh` option in the `provider` section](../index.md#node-ip-address-used-for-ssh-connection).
 
 ```terraform
 resource "proxmox_virtual_environment_file" "cloud_config" {
@@ -56,21 +80,40 @@ EOF
 }
 ```
 
+### Container Template (`vztmpl`)
+
+```terraform
+resource "proxmox_virtual_environment_file" "ubuntu_container_template" {
+  content_type = "vztmpl"
+  datastore_id = "local"
+  node_name    = "first-node"
+
+  source_file {
+    path = "https://download.proxmox.com/images/system/ubuntu-20.04-standard_20.04-1_amd64.tar.gz"
+  }
+}
+```
+
+
 ## Argument Reference
 
-- `content_type` - (Optional) The content type.
-    - `backup`
-    - `iso`
-    - `snippets`
-    - `vztmpl`
+- `content_type` - (Optional) The content type. If not specified, the content type will be inferred from the file
+  extension. Valid values are:
+    - `backup` (allowed extensions: `.vzdump`)
+    - `iso` (allowed extensions: `.iso`, `.img`)
+    - `snippets` (allowed extensions: any)
+    - `vztmpl` (allowed extensions: `.tar.gz`, `.tar.xz`, `tar.zst`)
 - `datastore_id` - (Required) The datastore id.
 - `node_name` - (Required) The node name.
 - `overwrite` - (Optional) Whether to overwrite an existing file (defaults to
   `true`).
-- `source_file` - (Optional) The source file (conflicts with `source_raw`).
+- `source_file` - (Optional) The source file (conflicts with `source_raw`), could be a
+  local file or a URL. If the source file is a URL, the file will be downloaded
+  and stored locally before uploading it to Proxmox VE.
     - `checksum` - (Optional) The SHA256 checksum of the source file.
     - `file_name` - (Optional) The file name to use instead of the source file
-      name.
+      name. Useful when the source file does not have a valid file extension, for example 
+      when the source file is a URL referencing a `.qcow2` image.
     - `insecure` - (Optional) Whether to skip the TLS verification step for
       HTTPS sources (defaults to `false`).
     - `path` - (Required) A path to a local file or a URL.
@@ -108,8 +151,8 @@ the resource from replacing the file, set `overwrite` to `false`.
 Instances can be imported using the `node_name`, `datastore_id`, `content_type`
 and the `file_name` in the following format:
 
-```
-<node_name>:<datastore_id>/<content_type>/<file_name>
+```text
+node_name:datastore_id/content_type/file_name
 ```
 
 Example:

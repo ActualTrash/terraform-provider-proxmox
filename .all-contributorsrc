@@ -55,7 +55,8 @@
       "contributions": [
         "code",
         "question",
-        "bug"
+        "bug",
+        "doc"
       ]
     },
     {
@@ -495,7 +496,8 @@
       "profile": "https://github.com/TheNotary",
       "contributions": [
         "code",
-        "test"
+        "test",
+        "doc"
       ]
     },
     {
@@ -526,6 +528,44 @@
       "contributions": [
         "bug",
         "financial"
+      ]
+    },
+    {
+      "login": "muhlba91",
+      "name": "Daniel Mühlbachler-Pietrzykowski",
+      "avatar_url": "https://avatars.githubusercontent.com/u/653739?v=4",
+      "profile": "https://github.com/muhlba91",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "windowsrefund",
+      "name": "windowsrefund",
+      "avatar_url": "https://avatars.githubusercontent.com/u/512222?v=4",
+      "profile": "https://github.com/windowsrefund",
+      "contributions": [
+        "test"
+      ]
+    },
+    {
+      "login": "Fabiosilvero",
+      "name": "Fabiosilvero",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22865938?v=4",
+      "profile": "https://github.com/Fabiosilvero",
+      "contributions": [
+        "test"
+      ]
+    },
+    {
+      "login": "DanielHabenicht",
+      "name": "DanielHabenicht",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13590797?v=4",
+      "profile": "https://danielhabenicht.github.io/",
+      "contributions": [
+        "bug",
+        "doc",
+        "code"
       ]
     }
   ],

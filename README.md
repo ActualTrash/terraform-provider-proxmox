@@ -1,4 +1,5 @@
 # Terraform Provider for Proxmox
+
 [![Go Report Card](https://goreportcard.com/badge/github.com/bpg/terraform-provider-proxmox)](https://goreportcard.com/report/github.com/bpg/terraform-provider-proxmox)
 [![GoDoc](https://godoc.org/github.com/bpg/terraform-provider-proxmox?status.svg)](http://godoc.org/github.com/bpg/terraform-provider-proxmox)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/bpg/terraform-provider-proxmox)](https://github.com/bpg/terraform-provider-proxmox/releases/latest)
@@ -25,7 +26,9 @@ backwards compatibility between provider versions as much as possible.
 
 ## Requirements
 
-- [Terraform](https://www.terraform.io/downloads.html) 1.2+
+- [Proxmox Virtual Environment](https://www.proxmox.com/en/proxmox-virtual-environment/) 8.x
+- TLS 1.3 for the Proxmox API endpoint
+- [Terraform](https://www.terraform.io/downloads.html) 1.4+
 - [Go](https://golang.org/doc/install) 1.21 (to build the provider plugin)
 
 ## Building the provider
@@ -61,14 +64,21 @@ make test
 
 Tests are limited to regression tests, ensuring backwards compatibility.
 
+A limited number of acceptance tests are available in the `proxmoxtf/test` directory, mostly
+for "new" functionality implemented using the Terraform Provider Framework. These tests
+are not run by default, as they require a Proxmox VE environment to be available.
+They can be run using `make testacc`, the Proxmox connection can be configured using
+environment variables, see provider documentation for details.
+
 ## Deploying the example resources
 
-There are number of TF examples in the `examples` directory, which can be used
+There are number of TF examples in the `example` directory, which can be used
 to deploy a Container, VM, or other Proxmox resources on your test Proxmox
-cluster. The following assumptions are made about the test Proxmox cluster:
+environment. The following assumptions are made about the test environment:
 
 - It has one node named `pve`
 - The node has local storages named `local` and `local-lvm`
+- The "Snippets" content type is enabled in `local` storage
 
 Create `examples/terraform.tfvars` with the following variables:
 
@@ -146,7 +156,7 @@ using SFTP. This requires the use of a PAM account (standard Linux account).
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/bpg"><img src="https://avatars.githubusercontent.com/u/627562?v=4?s=100" width="100px;" alt="Pavel Boldyrev"/><br /><sub><b>Pavel Boldyrev</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=bpg" title="Code">💻</a> <a href="#maintenance-bpg" title="Maintenance">🚧</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/luhahn"><img src="https://avatars.githubusercontent.com/u/61747797?v=4?s=100" width="100px;" alt="Lucas Hahn"/><br /><sub><b>Lucas Hahn</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=luhahn" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/blz-ea"><img src="https://avatars.githubusercontent.com/u/19339605?v=4?s=100" width="100px;" alt="Alex Kulikovskikh"/><br /><sub><b>Alex Kulikovskikh</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=blz-ea" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/otopetrik"><img src="https://avatars.githubusercontent.com/u/972298?v=4?s=100" width="100px;" alt="Oto Petřík"/><br /><sub><b>Oto Petřík</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=otopetrik" title="Code">💻</a> <a href="#question-otopetrik" title="Answering Questions">💬</a> <a href="https://github.com/bpg/terraform-provider-proxmox/issues?q=author%3Aotopetrik" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/otopetrik"><img src="https://avatars.githubusercontent.com/u/972298?v=4?s=100" width="100px;" alt="Oto Petřík"/><br /><sub><b>Oto Petřík</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=otopetrik" title="Code">💻</a> <a href="#question-otopetrik" title="Answering Questions">💬</a> <a href="https://github.com/bpg/terraform-provider-proxmox/issues?q=author%3Aotopetrik" title="Bug reports">🐛</a> <a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=otopetrik" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.patreon.com/boik"><img src="https://avatars.githubusercontent.com/u/6451933?v=4?s=100" width="100px;" alt="Boik"/><br /><sub><b>Boik</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=qazbnm456" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/abdo-farag"><img src="https://avatars.githubusercontent.com/u/10170837?v=4?s=100" width="100px;" alt="Abdelfadeel Farag"/><br /><sub><b>Abdelfadeel Farag</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=abdo-farag" title="Code">💻</a></td>
     </tr>
@@ -208,10 +218,16 @@ using SFTP. This requires the use of a PAM account (standard Linux account).
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/0xinterface"><img src="https://avatars.githubusercontent.com/u/890207?v=4?s=100" width="100px;" alt="Kristopher"/><br /><sub><b>Kristopher</b></sub></a><br /><a href="#ideas-0xinterface" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/mritalian"><img src="https://avatars.githubusercontent.com/u/15789014?v=4?s=100" width="100px;" alt="Eric B"/><br /><sub><b>Eric B</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=mritalian" title="Tests">⚠️</a> <a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=mritalian" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/2b"><img src="https://avatars.githubusercontent.com/u/829041?v=4?s=100" width="100px;" alt="2b"/><br /><sub><b>2b</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/issues?q=author%3A2b" title="Bug reports">🐛</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/TheNotary"><img src="https://avatars.githubusercontent.com/u/799247?v=4?s=100" width="100px;" alt="TheNotary"/><br /><sub><b>TheNotary</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=TheNotary" title="Code">💻</a> <a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=TheNotary" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/TheNotary"><img src="https://avatars.githubusercontent.com/u/799247?v=4?s=100" width="100px;" alt="TheNotary"/><br /><sub><b>TheNotary</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=TheNotary" title="Code">💻</a> <a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=TheNotary" title="Tests">⚠️</a> <a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=TheNotary" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/zamrih"><img src="https://avatars.githubusercontent.com/u/1061718?v=4?s=100" width="100px;" alt="zamrih"/><br /><sub><b>zamrih</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/issues?q=author%3Azamrih" title="Bug reports">🐛</a> <a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=zamrih" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ratiborusx"><img src="https://avatars.githubusercontent.com/u/123507924?v=4?s=100" width="100px;" alt="Ratiborus"/><br /><sub><b>Ratiborus</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/issues?q=author%3Aratiborusx" title="Bug reports">🐛</a> <a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=ratiborusx" title="Tests">⚠️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/skleinjung"><img src="https://avatars.githubusercontent.com/u/17599474?v=4?s=100" width="100px;" alt="Sean Kleinjung"/><br /><sub><b>Sean Kleinjung</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/issues?q=author%3Askleinjung" title="Bug reports">🐛</a> <a href="#financial-skleinjung" title="Financial">💵</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/muhlba91"><img src="https://avatars.githubusercontent.com/u/653739?v=4?s=100" width="100px;" alt="Daniel Mühlbachler-Pietrzykowski"/><br /><sub><b>Daniel Mühlbachler-Pietrzykowski</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=muhlba91" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/windowsrefund"><img src="https://avatars.githubusercontent.com/u/512222?v=4?s=100" width="100px;" alt="windowsrefund"/><br /><sub><b>windowsrefund</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=windowsrefund" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Fabiosilvero"><img src="https://avatars.githubusercontent.com/u/22865938?v=4?s=100" width="100px;" alt="Fabiosilvero"/><br /><sub><b>Fabiosilvero</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=Fabiosilvero" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://danielhabenicht.github.io/"><img src="https://avatars.githubusercontent.com/u/13590797?v=4?s=100" width="100px;" alt="DanielHabenicht"/><br /><sub><b>DanielHabenicht</b></sub></a><br /><a href="https://github.com/bpg/terraform-provider-proxmox/issues?q=author%3ADanielHabenicht" title="Bug reports">🐛</a> <a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=DanielHabenicht" title="Documentation">📖</a> <a href="https://github.com/bpg/terraform-provider-proxmox/commits?author=DanielHabenicht" title="Code">💻</a></td>
     </tr>
   </tbody>
   <tfoot>
@@ -237,6 +253,7 @@ using SFTP. This requires the use of a PAM account (standard Linux account).
 ## Sponsorship
 
 ❤️ This project is sponsored by:
+
 - [TJ Zimmerman](https://github.com/zimmertr)
 
 Thanks again for your support, it is much appreciated! 🙏

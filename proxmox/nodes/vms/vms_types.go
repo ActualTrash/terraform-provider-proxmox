@@ -184,7 +184,6 @@ type CustomStorageDevice struct {
 	Interface               *string
 	ID                      *string
 	FileID                  *string
-	SizeInt                 *int
 }
 
 // PathInDatastore returns path part of FileVolume or nil if it is not yet allocated.
@@ -242,8 +241,9 @@ type CustomStorageDevices map[string]CustomStorageDevice
 
 // CustomUSBDevice handles QEMU USB device parameters.
 type CustomUSBDevice struct {
-	HostDevice string            `json:"host"           url:"host"`
-	USB3       *types.CustomBool `json:"usb3,omitempty" url:"usb3,omitempty,int"`
+	HostDevice *string           `json:"host"              url:"host"`
+	Mapping    *string           `json:"mapping,omitempty" url:"mapping,omitempty"`
+	USB3       *types.CustomBool `json:"usb3,omitempty"    url:"usb3,omitempty,int"`
 }
 
 // CustomUSBDevices handles QEMU USB device parameters.
@@ -432,11 +432,11 @@ type GetResponseData struct {
 	CPULimit             *types.CustomInt                `json:"cpulimit,omitempty"`
 	CPUSockets           *int                            `json:"sockets,omitempty"`
 	CPUUnits             *int                            `json:"cpuunits,omitempty"`
-	DedicatedMemory      *int                            `json:"memory,omitempty"`
+	DedicatedMemory      *int64                          `json:"memory,omitempty"`
 	DeletionProtection   *types.CustomBool               `json:"protection,omitempty"`
 	Description          *string                         `json:"description,omitempty"`
 	EFIDisk              *CustomEFIDisk                  `json:"efidisk0,omitempty"`
-	FloatingMemory       *int                            `json:"balloon,omitempty"`
+	FloatingMemory       *int64                          `json:"balloon,omitempty"`
 	FloatingMemoryShares *int                            `json:"shares,omitempty"`
 	Freeze               *types.CustomBool               `json:"freeze,omitempty"`
 	HookScript           *string                         `json:"hookscript,omitempty"`
@@ -517,7 +517,10 @@ type GetResponseData struct {
 	Tags                 *string                         `json:"tags,omitempty"`
 	Template             *types.CustomBool               `json:"template,omitempty"`
 	TimeDriftFixEnabled  *types.CustomBool               `json:"tdf,omitempty"`
-	USBDevices           *CustomUSBDevices               `json:"usb,omitempty"`
+	USBDevice0           *CustomUSBDevice                `json:"usb0,omitempty"`
+	USBDevice1           *CustomUSBDevice                `json:"usb1,omitempty"`
+	USBDevice2           *CustomUSBDevice                `json:"usb2,omitempty"`
+	USBDevice3           *CustomUSBDevice                `json:"usb3,omitempty"`
 	VGADevice            *CustomVGADevice                `json:"vga,omitempty"`
 	VirtualCPUCount      *int                            `json:"vcpus,omitempty"`
 	VirtualIODevice0     *CustomStorageDevice            `json:"virtio0,omitempty"`
@@ -551,11 +554,11 @@ type GetStatusResponseData struct {
 	AgentEnabled     *types.CustomBool `json:"agent,omitempty"`
 	CPUCount         *float64          `json:"cpus,omitempty"`
 	Lock             *string           `json:"lock,omitempty"`
-	MemoryAllocation *int              `json:"maxmem,omitempty"`
+	MemoryAllocation *int64            `json:"maxmem,omitempty"`
 	Name             *string           `json:"name,omitempty"`
 	PID              *int              `json:"pid,omitempty"`
 	QMPStatus        *string           `json:"qmpstatus,omitempty"`
-	RootDiskSize     *int              `json:"maxdisk,omitempty"`
+	RootDiskSize     *int64            `json:"maxdisk,omitempty"`
 	SpiceSupport     *types.CustomBool `json:"spice,omitempty"`
 	Status           string            `json:"status,omitempty"`
 	Tags             *string           `json:"tags,omitempty"`
@@ -1232,8 +1235,16 @@ func (r CustomStorageDevices) EncodeValues(_ string, v *url.Values) error {
 
 // EncodeValues converts a CustomUSBDevice struct to a URL vlaue.
 func (r CustomUSBDevice) EncodeValues(key string, v *url.Values) error {
+	if r.HostDevice == nil && r.Mapping == nil {
+		return fmt.Errorf("either device ID or resource mapping must be set")
+	}
+
 	values := []string{
-		fmt.Sprintf("host=%s", r.HostDevice),
+		fmt.Sprintf("host=%s", *(r.HostDevice)),
+	}
+
+	if r.Mapping != nil {
+		values = append(values, fmt.Sprintf("mapping=%s", *r.Mapping))
 	}
 
 	if r.USB3 != nil {
@@ -1689,6 +1700,36 @@ func (r *CustomPCIDevice) UnmarshalJSON(b []byte) error {
 			case "x-vga":
 				bv := types.CustomBool(v[1] == "1")
 				r.XVGA = &bv
+			}
+		}
+	}
+
+	return nil
+}
+
+// UnmarshalJSON converts a CustomUSBDevice string to an object.
+func (r *CustomUSBDevice) UnmarshalJSON(b []byte) error {
+	var s string
+
+	if err := json.Unmarshal(b, &s); err != nil {
+		return fmt.Errorf("failed to unmarshal CustomUSBDevice: %w", err)
+	}
+
+	pairs := strings.Split(s, ",")
+
+	for _, p := range pairs {
+		v := strings.Split(strings.TrimSpace(p), "=")
+		if len(v) == 1 {
+			r.HostDevice = &v[1]
+		} else if len(v) == 2 {
+			switch v[0] {
+			case "host":
+				r.HostDevice = &v[1]
+			case "mapping":
+				r.Mapping = &v[1]
+			case "usb3":
+				bv := types.CustomBool(v[1] == "1")
+				r.USB3 = &bv
 			}
 		}
 	}
