@@ -1712,14 +1712,14 @@ func vmShutdown(ctx context.Context, vmAPI *vms.Client, d *schema.ResourceData) 
 // Forcefully stop the VM, then wait for it to actually stop
 func vmStop(ctx context.Context, vmAPI *vms.Client, d *schema.ResourceData) diag.Diagnostics {
 	tflog.Debug(ctx, "Stopping VM")
-	shutdownTimeout := d.Get(mkResourceVirtualEnvironmentVMTimeoutShutdownVM).(int)
+	stopTimeout := d.Get(mkResourceVirtualEnvironmentVMTimeoutStopVM).(int)
 
-	e := vmAPI.StopVM(ctx, shutdownTimeout+30) // TODO: Change this to stop timeout
+	e := vmAPI.StopVM(ctx, stopTimeout+30)
 	if e != nil {
 		return diag.FromErr(e)
 	}
 
-	return diag.FromErr(vmAPI.WaitForVMState(ctx, "stopped", shutdownTimeout, 1))
+	return diag.FromErr(vmAPI.WaitForVMState(ctx, "stopped", stopTimeout, 1))
 }
 
 func vmCreateClone(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
