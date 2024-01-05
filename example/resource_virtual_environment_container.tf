@@ -1,6 +1,8 @@
 resource "proxmox_virtual_environment_container" "example_template" {
   description = "Managed by Terraform"
 
+  start_on_boot = "true"
+
   disk {
     datastore_id = element(data.proxmox_virtual_environment_datastores.example.datastore_ids, index(data.proxmox_virtual_environment_datastores.example.datastore_ids, "local-lvm"))
     size         = 10
@@ -15,7 +17,7 @@ resource "proxmox_virtual_environment_container" "example_template" {
 
   initialization {
     dns {
-      server = "1.1.1.1"
+      servers = ["1.1.1.1", "8.8.8.8"]
     }
 
     hostname = "terraform-provider-proxmox-example-lxc-template"
@@ -40,7 +42,7 @@ resource "proxmox_virtual_environment_container" "example_template" {
   node_name = data.proxmox_virtual_environment_nodes.example.names[0]
 
   operating_system {
-    template_file_id = proxmox_virtual_environment_file.ubuntu_container_template.id
+    template_file_id = proxmox_virtual_environment_download_file.release_20231211_ubuntu_22_jammy_lxc_img.id
     type             = "ubuntu"
   }
 
@@ -72,7 +74,7 @@ resource "proxmox_virtual_environment_container" "example" {
   mount_point {
     // bind mount, requires root@pam
     volume = "/mnt/bindmounts/shared"
-    path    = "/shared"
+    path   = "/shared"
   }
 
   node_name = data.proxmox_virtual_environment_nodes.example.names[0]

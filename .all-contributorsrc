@@ -272,7 +272,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/51059348?v=4",
       "profile": "https://github.com/rafsaf",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "ideas"
       ]
     },
     {
@@ -641,6 +643,97 @@
       "contributions": [
         "bug",
         "test"
+      ]
+    },
+    {
+      "login": "ActualTrash",
+      "name": "Chase H",
+      "avatar_url": "https://avatars.githubusercontent.com/u/31072505?v=4",
+      "profile": "https://github.com/ActualTrash",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "zmingxie",
+      "name": "Ming Xie",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1136583?v=4",
+      "profile": "https://github.com/zmingxie",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "frostyfab",
+      "name": "frostyfab",
+      "avatar_url": "https://avatars.githubusercontent.com/u/140175283?v=4",
+      "profile": "https://github.com/frostyfab",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "joek-office",
+      "name": "joek-office",
+      "avatar_url": "https://avatars.githubusercontent.com/u/124031385?v=4",
+      "profile": "https://github.com/joek-office",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "mkopnsrc",
+      "name": "Mahesh K.",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2036998?v=4",
+      "profile": "http://opnsrc.dev",
+      "contributions": [
+        "financial"
+      ]
+    },
+    {
+      "login": "bitchecker",
+      "name": "bitchecker",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11056930?v=4",
+      "profile": "https://github.com/bitchecker",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "olemathias",
+      "name": "Ole Mathias Aa. Heggem",
+      "avatar_url": "https://avatars.githubusercontent.com/u/891048?v=4",
+      "profile": "https://github.com/olemathias",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "scibi",
+      "name": "scibi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/703860?v=4",
+      "profile": "https://github.com/scibi",
+      "contributions": [
+        "bug",
+        "ideas"
+      ]
+    },
+    {
+      "login": "LEI",
+      "name": "Guillaume",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4112243?v=4",
+      "profile": "https://github.com/LEI",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "loganmancuso",
+      "name": "Logan Mancuso",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18329590?v=4",
+      "profile": "https://loganmancuso.github.io/",
+      "contributions": [
+        "bug"
       ]
     }
   ],

@@ -124,7 +124,7 @@ func uploadSnippetFile(t *testing.T, file *os.File) {
 	u, err := url.ParseRequestURI(endpoint)
 	require.NoError(t, err)
 
-	sshUsername := strings.Split(utils.GetAnyStringEnv("PROXMOX_VE_USERNAME"), "@")[0]
+	sshUsername := utils.GetAnyStringEnv("PROXMOX_VE_SSH_USERNAME")
 	sshAgentSocket := utils.GetAnyStringEnv("SSH_AUTH_SOCK", "PROXMOX_VE_SSH_AUTH_SOCK", "PM_VE_SSH_AUTH_SOCK")
 
 	sshClient, err := ssh.NewClient(
@@ -173,7 +173,7 @@ func createFile(t *testing.T, namePattern string, content string) *os.File {
 func deleteSnippet(t *testing.T, fname string) {
 	t.Helper()
 
-	err := getNodesClient().DeleteDatastoreFile(context.Background(), "local", fmt.Sprintf("snippets/%s", fname))
+	err := getNodeStorageClient().DeleteDatastoreFile(context.Background(), fmt.Sprintf("snippets/%s", fname))
 	require.NoError(t, err)
 }
 

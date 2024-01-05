@@ -56,6 +56,7 @@ const (
 	dvResourceVirtualEnvironmentVMCPUArchitecture                   = "x86_64"
 	dvResourceVirtualEnvironmentVMCPUCores                          = 1
 	dvResourceVirtualEnvironmentVMCPUHotplugged                     = 0
+	dvResourceVirtualEnvironmentVMCPULimit                          = 0
 	dvResourceVirtualEnvironmentVMCPUNUMA                           = false
 	dvResourceVirtualEnvironmentVMCPUSockets                        = 1
 	dvResourceVirtualEnvironmentVMCPUType                           = "qemu64"
@@ -68,7 +69,7 @@ const (
 	dvResourceVirtualEnvironmentVMDiskSize                          = 8
 	dvResourceVirtualEnvironmentVMDiskIOThread                      = false
 	dvResourceVirtualEnvironmentVMDiskSSD                           = false
-	dvResourceVirtualEnvironmentVMDiskDiscard                       = ""
+	dvResourceVirtualEnvironmentVMDiskDiscard                       = "ignore"
 	dvResourceVirtualEnvironmentVMDiskCache                         = "none"
 	dvResourceVirtualEnvironmentVMDiskSpeedRead                     = 0
 	dvResourceVirtualEnvironmentVMDiskSpeedReadBurstable            = 0
@@ -141,7 +142,7 @@ const (
 	dvResourceVirtualEnvironmentVMHookScript                        = ""
 
 	maxResourceVirtualEnvironmentVMAudioDevices   = 1
-	maxResourceVirtualEnvironmentVMNetworkDevices = 8
+	maxResourceVirtualEnvironmentVMNetworkDevices = 32
 	maxResourceVirtualEnvironmentVMSerialDevices  = 4
 	maxResourceVirtualEnvironmentVMHostPCIDevices = 8
 	maxResourceVirtualEnvironmentVMHostUSBDevices = 4
@@ -175,6 +176,7 @@ const (
 	mkResourceVirtualEnvironmentVMCPUCores                          = "cores"
 	mkResourceVirtualEnvironmentVMCPUFlags                          = "flags"
 	mkResourceVirtualEnvironmentVMCPUHotplugged                     = "hotplugged"
+	mkResourceVirtualEnvironmentVMCPULimit                          = "limit"
 	mkResourceVirtualEnvironmentVMCPUNUMA                           = "numa"
 	mkResourceVirtualEnvironmentVMCPUSockets                        = "sockets"
 	mkResourceVirtualEnvironmentVMCPUType                           = "type"
@@ -219,6 +221,7 @@ const (
 	mkResourceVirtualEnvironmentVMInitializationDNS                 = "dns"
 	mkResourceVirtualEnvironmentVMInitializationDNSDomain           = "domain"
 	mkResourceVirtualEnvironmentVMInitializationDNSServer           = "server"
+	mkResourceVirtualEnvironmentVMInitializationDNSServers          = "servers"
 	mkResourceVirtualEnvironmentVMInitializationIPConfig            = "ip_config"
 	mkResourceVirtualEnvironmentVMInitializationIPConfigIPv4        = "ipv4"
 	mkResourceVirtualEnvironmentVMInitializationIPConfigIPv4Address = "address"
@@ -526,8 +529,9 @@ func VM() *schema.Resource {
 							mkResourceVirtualEnvironmentVMCPUArchitecture: dvResourceVirtualEnvironmentVMCPUArchitecture,
 							mkResourceVirtualEnvironmentVMCPUCores:        dvResourceVirtualEnvironmentVMCPUCores,
 							mkResourceVirtualEnvironmentVMCPUFlags:        []interface{}{},
-							mkResourceVirtualEnvironmentVMCPUNUMA:         dvResourceVirtualEnvironmentVMCPUNUMA,
 							mkResourceVirtualEnvironmentVMCPUHotplugged:   dvResourceVirtualEnvironmentVMCPUHotplugged,
+							mkResourceVirtualEnvironmentVMCPULimit:        dvResourceVirtualEnvironmentVMCPULimit,
+							mkResourceVirtualEnvironmentVMCPUNUMA:         dvResourceVirtualEnvironmentVMCPUNUMA,
 							mkResourceVirtualEnvironmentVMCPUSockets:      dvResourceVirtualEnvironmentVMCPUSockets,
 							mkResourceVirtualEnvironmentVMCPUType:         dvResourceVirtualEnvironmentVMCPUType,
 							mkResourceVirtualEnvironmentVMCPUUnits:        dvResourceVirtualEnvironmentVMCPUUnits,
@@ -565,6 +569,15 @@ func VM() *schema.Resource {
 							Optional:         true,
 							Default:          dvResourceVirtualEnvironmentVMCPUHotplugged,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 2304)),
+						},
+						mkResourceVirtualEnvironmentVMCPULimit: {
+							Type:        schema.TypeInt,
+							Description: "Limit of CPU usage",
+							Optional:    true,
+							Default:     dvResourceVirtualEnvironmentVMCPULimit,
+							ValidateDiagFunc: validation.ToDiagFunc(
+								validation.IntBetween(0, 128),
+							),
 						},
 						mkResourceVirtualEnvironmentVMCPUNUMA: {
 							Type:        schema.TypeBool,
@@ -875,8 +888,17 @@ func VM() *schema.Resource {
 									mkResourceVirtualEnvironmentVMInitializationDNSServer: {
 										Type:        schema.TypeString,
 										Description: "The DNS server",
+										Deprecated: "The `server` attribute is deprecated and will be removed in a future release. " +
+											"Please use the `servers` attribute instead.",
+										Optional: true,
+										Default:  dvResourceVirtualEnvironmentVMInitializationDNSServer,
+									},
+									mkResourceVirtualEnvironmentVMInitializationDNSServers: {
+										Type:        schema.TypeList,
+										Description: "The list of DNS servers",
 										Optional:    true,
-										Default:     dvResourceVirtualEnvironmentVMInitializationDNSServer,
+										Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validation.IsIPAddress},
+										MinItems:    0,
 									},
 								},
 							},
@@ -1646,6 +1668,16 @@ func VM() *schema.Resource {
 	}
 }
 
+// ConvertToStringSlice helps convert interface slice to string slice.
+func ConvertToStringSlice(interfaceSlice []interface{}) []string {
+	resultSlice := []string{}
+	for _, val := range interfaceSlice {
+		resultSlice = append(resultSlice, val.(string))
+	}
+
+	return resultSlice
+}
+
 func vmCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	clone := d.Get(mkResourceVirtualEnvironmentVMClone).([]interface{})
 
@@ -1662,10 +1694,7 @@ func findExistingCloudInitDrive(vmConfig *vms.GetResponseData, vmID int, default
 		vmConfig.IDEDevice0, vmConfig.IDEDevice1, vmConfig.IDEDevice2, vmConfig.IDEDevice3,
 	}
 	for i, device := range devices {
-		if device != nil && device.Enabled && device.Media != nil && *device.Media == "cdrom" && strings.Contains(
-			device.FileVolume,
-			fmt.Sprintf("vm-%d-cloudinit", vmID),
-		) {
+		if device != nil && device.Enabled && device.IsCloudInitDrive(vmID) {
 			return fmt.Sprintf("ide%d", i)
 		}
 	}
@@ -1842,7 +1871,7 @@ func vmCreateClone(ctx context.Context, d *schema.ResourceData, m interface{}) d
 
 		onlySharedDatastores := true
 		for _, datastore := range datastores {
-			datastoreStatus, err2 := api.Node(cloneNodeName).GetDatastoreStatus(ctx, datastore)
+			datastoreStatus, err2 := api.Node(cloneNodeName).Storage(datastore).GetDatastoreStatus(ctx)
 			if err2 != nil {
 				return diag.FromErr(err2)
 			}
@@ -2028,6 +2057,7 @@ func vmCreateClone(ctx context.Context, d *schema.ResourceData, m interface{}) d
 		cpuCores := cpuBlock[mkResourceVirtualEnvironmentVMCPUCores].(int)
 		cpuFlags := cpuBlock[mkResourceVirtualEnvironmentVMCPUFlags].([]interface{})
 		cpuHotplugged := cpuBlock[mkResourceVirtualEnvironmentVMCPUHotplugged].(int)
+		cpuLimit := cpuBlock[mkResourceVirtualEnvironmentVMCPULimit].(int)
 		cpuNUMA := types.CustomBool(cpuBlock[mkResourceVirtualEnvironmentVMCPUNUMA].(bool))
 		cpuSockets := cpuBlock[mkResourceVirtualEnvironmentVMCPUSockets].(int)
 		cpuType := cpuBlock[mkResourceVirtualEnvironmentVMCPUType].(string)
@@ -2056,6 +2086,10 @@ func vmCreateClone(ctx context.Context, d *schema.ResourceData, m interface{}) d
 
 		if cpuHotplugged > 0 {
 			updateBody.VirtualCPUCount = &cpuHotplugged
+		}
+
+		if cpuLimit > 0 {
+			updateBody.CPULimit = &cpuLimit
 		}
 	}
 
@@ -2161,6 +2195,8 @@ func vmCreateClone(ctx context.Context, d *schema.ResourceData, m interface{}) d
 	}
 
 	updateBody.StartOnBoot = &onBoot
+
+	updateBody.SMBIOS = vmGetSMBIOS(d)
 
 	updateBody.StartupOrder = vmGetStartupOrder(d)
 
@@ -2504,6 +2540,7 @@ func vmCreateCustom(ctx context.Context, d *schema.ResourceData, m interface{}) 
 	cpuCores := cpuBlock[mkResourceVirtualEnvironmentVMCPUCores].(int)
 	cpuFlags := cpuBlock[mkResourceVirtualEnvironmentVMCPUFlags].([]interface{})
 	cpuHotplugged := cpuBlock[mkResourceVirtualEnvironmentVMCPUHotplugged].(int)
+	cpuLimit := cpuBlock[mkResourceVirtualEnvironmentVMCPULimit].(int)
 	cpuSockets := cpuBlock[mkResourceVirtualEnvironmentVMCPUSockets].(int)
 	cpuNUMA := types.CustomBool(cpuBlock[mkResourceVirtualEnvironmentVMCPUNUMA].(bool))
 	cpuType := cpuBlock[mkResourceVirtualEnvironmentVMCPUType].(string)
@@ -2777,6 +2814,10 @@ func vmCreateCustom(ctx context.Context, d *schema.ResourceData, m interface{}) 
 
 	if cpuHotplugged > 0 {
 		createBody.VirtualCPUCount = &cpuHotplugged
+	}
+
+	if cpuLimit > 0 {
+		createBody.CPULimit = &cpuLimit
 	}
 
 	if description != "" {
@@ -3069,10 +3110,15 @@ func vmGetCloudInitConfig(d *schema.ResourceData) *vms.CustomCloudInitConfig {
 				initializationConfig.SearchDomain = &domain
 			}
 
-			server := initializationDNSBlock[mkResourceVirtualEnvironmentVMInitializationDNSServer].(string)
+			servers := initializationDNSBlock[mkResourceVirtualEnvironmentVMInitializationDNSServers].([]interface{})
+			deprecatedServer := initializationDNSBlock[mkResourceVirtualEnvironmentVMInitializationDNSServer].(string)
 
-			if server != "" {
-				initializationConfig.Nameserver = &server
+			if len(servers) > 0 {
+				nameserver := strings.Join(ConvertToStringSlice(servers), " ")
+
+				initializationConfig.Nameserver = &nameserver
+			} else if deprecatedServer != "" {
+				initializationConfig.Nameserver = &deprecatedServer
 			}
 		}
 
@@ -4041,6 +4087,13 @@ func vmReadCustom(
 		cpu[mkResourceVirtualEnvironmentVMCPUHotplugged] = 0
 	}
 
+	if vmConfig.CPULimit != nil {
+		cpu[mkResourceVirtualEnvironmentVMCPULimit] = *vmConfig.CPULimit
+	} else {
+		// Default value of "cpulimit" is "0" according to the API documentation.
+		cpu[mkResourceVirtualEnvironmentVMCPULimit] = 0
+	}
+
 	if vmConfig.NUMAEnabled != nil {
 		cpu[mkResourceVirtualEnvironmentVMCPUNUMA] = *vmConfig.NUMAEnabled
 	} else {
@@ -4094,6 +4147,7 @@ func vmReadCustom(
 		cpu[mkResourceVirtualEnvironmentVMCPUCores] != dvResourceVirtualEnvironmentVMCPUCores ||
 		len(cpu[mkResourceVirtualEnvironmentVMCPUFlags].([]interface{})) > 0 ||
 		cpu[mkResourceVirtualEnvironmentVMCPUHotplugged] != dvResourceVirtualEnvironmentVMCPUHotplugged ||
+		cpu[mkResourceVirtualEnvironmentVMCPULimit] != dvResourceVirtualEnvironmentVMCPULimit ||
 		cpu[mkResourceVirtualEnvironmentVMCPUSockets] != dvResourceVirtualEnvironmentVMCPUSockets ||
 		cpu[mkResourceVirtualEnvironmentVMCPUType] != dvResourceVirtualEnvironmentVMCPUType ||
 		cpu[mkResourceVirtualEnvironmentVMCPUUnits] != dvResourceVirtualEnvironmentVMCPUUnits {
@@ -4110,7 +4164,7 @@ func vmReadCustom(
 			continue
 		}
 
-		if strings.HasSuffix(dd.FileVolume, fmt.Sprintf("vm-%d-cloudinit", vmID)) {
+		if dd.IsCloudInitDrive(vmID) {
 			continue
 		}
 
@@ -4133,7 +4187,7 @@ func vmReadCustom(
 			if datastoreID != "" {
 				// disk format may not be returned by config API if it is default for the storage, and that may be different
 				// from the default qcow2, so we need to read it from the storage API to make sure we have the correct value
-				files, err := api.Node(nodeName).ListDatastoreFiles(ctx, datastoreID)
+				files, err := api.Node(nodeName).Storage(datastoreID).ListDatastoreFiles(ctx)
 				if err != nil {
 					diags = append(diags, diag.FromErr(err)...)
 					continue
@@ -4238,7 +4292,7 @@ func vmReadCustom(
 		} else {
 			// disk format may not be returned by config API if it is default for the storage, and that may be different
 			// from the default qcow2, so we need to read it from the storage API to make sure we have the correct value
-			files, err := api.Node(nodeName).ListDatastoreFiles(ctx, fileIDParts[0])
+			files, err := api.Node(nodeName).Storage(fileIDParts[0]).ListDatastoreFiles(ctx)
 			if err != nil {
 				diags = append(diags, diag.FromErr(err)...)
 			} else {
@@ -4337,7 +4391,7 @@ func vmReadCustom(
 		if pp.ROMBAR != nil {
 			pci[mkResourceVirtualEnvironmentVMHostPCIDeviceROMBAR] = *pp.ROMBAR
 		} else {
-			pci[mkResourceVirtualEnvironmentVMHostPCIDeviceROMBAR] = false
+			pci[mkResourceVirtualEnvironmentVMHostPCIDeviceROMBAR] = true
 		}
 
 		if pp.ROMFile != nil {
@@ -4361,7 +4415,7 @@ func vmReadCustom(
 		pciMap[pi] = pci
 	}
 
-	if len(currentPCIList) > 0 {
+	if len(clone) == 0 || len(currentPCIList) > 0 {
 		orderedPCIList := orderedListFromMap(pciMap)
 		err := d.Set(mkResourceVirtualEnvironmentVMHostPCI, orderedPCIList)
 		diags = append(diags, diag.FromErr(err)...)
@@ -4399,7 +4453,7 @@ func vmReadCustom(
 		usbMap[pi] = usb
 	}
 
-	if len(currentUSBList) > 0 {
+	if len(clone) == 0 || len(currentUSBList) > 0 {
 		// todo: reordering of devices by PVE may cause an issue here
 		orderedUSBList := orderedListFromMap(usbMap)
 		err := d.Set(mkResourceVirtualEnvironmentVMHostUSB, orderedUSBList)
@@ -4427,10 +4481,32 @@ func vmReadCustom(
 			initializationDNS[mkResourceVirtualEnvironmentVMInitializationDNSDomain] = ""
 		}
 
+		// check what we have in the plan
+		currentInitializationDNSBlock := map[string]interface{}{}
+		currentInitialization := d.Get(mkResourceVirtualEnvironmentVMInitialization).([]interface{})
+
+		if len(currentInitialization) > 0 {
+			currentInitializationBlock := currentInitialization[0].(map[string]interface{})
+			//nolint:lll
+			currentInitializationDNS := currentInitializationBlock[mkResourceVirtualEnvironmentVMInitializationDNS].([]interface{})
+			if len(currentInitializationDNS) > 0 {
+				currentInitializationDNSBlock = currentInitializationDNS[0].(map[string]interface{})
+			}
+		}
+
+		//nolint:lll
+		currentInitializationDNSServer, ok := currentInitializationDNSBlock[mkResourceVirtualEnvironmentVMInitializationDNSServer]
 		if vmConfig.CloudInitDNSServer != nil {
-			initializationDNS[mkResourceVirtualEnvironmentVMInitializationDNSServer] = *vmConfig.CloudInitDNSServer
+			if ok && currentInitializationDNSServer != "" {
+				// the template is using deprecated attribute mkResourceVirtualEnvironmentVMInitializationDNSServer
+				initializationDNS[mkResourceVirtualEnvironmentVMInitializationDNSServer] = *vmConfig.CloudInitDNSServer
+			} else {
+				dnsServer := strings.Split(*vmConfig.CloudInitDNSServer, " ")
+				initializationDNS[mkResourceVirtualEnvironmentVMInitializationDNSServers] = dnsServer
+			}
 		} else {
 			initializationDNS[mkResourceVirtualEnvironmentVMInitializationDNSServer] = ""
+			initializationDNS[mkResourceVirtualEnvironmentVMInitializationDNSServers] = []string{}
 		}
 
 		initialization[mkResourceVirtualEnvironmentVMInitializationDNS] = []interface{}{
@@ -4448,6 +4524,31 @@ func vmReadCustom(
 		vmConfig.IPConfig5,
 		vmConfig.IPConfig6,
 		vmConfig.IPConfig7,
+		vmConfig.IPConfig7,
+		vmConfig.IPConfig8,
+		vmConfig.IPConfig9,
+		vmConfig.IPConfig10,
+		vmConfig.IPConfig11,
+		vmConfig.IPConfig12,
+		vmConfig.IPConfig13,
+		vmConfig.IPConfig14,
+		vmConfig.IPConfig15,
+		vmConfig.IPConfig16,
+		vmConfig.IPConfig17,
+		vmConfig.IPConfig18,
+		vmConfig.IPConfig19,
+		vmConfig.IPConfig20,
+		vmConfig.IPConfig21,
+		vmConfig.IPConfig22,
+		vmConfig.IPConfig23,
+		vmConfig.IPConfig24,
+		vmConfig.IPConfig25,
+		vmConfig.IPConfig26,
+		vmConfig.IPConfig27,
+		vmConfig.IPConfig28,
+		vmConfig.IPConfig29,
+		vmConfig.IPConfig30,
+		vmConfig.IPConfig31,
 	}
 	ipConfigList := make([]interface{}, len(ipConfigObjects))
 
@@ -4650,9 +4751,9 @@ func vmReadCustom(
 	// Compare the network devices to those stored in the state.
 	currentNetworkDeviceList := d.Get(mkResourceVirtualEnvironmentVMNetworkDevice).([]interface{})
 
-	macAddresses := make([]interface{}, 8)
+	macAddresses := make([]interface{}, maxResourceVirtualEnvironmentVMNetworkDevices)
 	networkDeviceLast := -1
-	networkDeviceList := make([]interface{}, 8)
+	networkDeviceList := make([]interface{}, maxResourceVirtualEnvironmentVMNetworkDevices)
 	networkDeviceObjects := []*vms.CustomNetworkDevice{
 		vmConfig.NetworkDevice0,
 		vmConfig.NetworkDevice1,
@@ -4662,6 +4763,30 @@ func vmReadCustom(
 		vmConfig.NetworkDevice5,
 		vmConfig.NetworkDevice6,
 		vmConfig.NetworkDevice7,
+		vmConfig.NetworkDevice8,
+		vmConfig.NetworkDevice9,
+		vmConfig.NetworkDevice10,
+		vmConfig.NetworkDevice11,
+		vmConfig.NetworkDevice12,
+		vmConfig.NetworkDevice13,
+		vmConfig.NetworkDevice14,
+		vmConfig.NetworkDevice15,
+		vmConfig.NetworkDevice16,
+		vmConfig.NetworkDevice17,
+		vmConfig.NetworkDevice18,
+		vmConfig.NetworkDevice19,
+		vmConfig.NetworkDevice20,
+		vmConfig.NetworkDevice21,
+		vmConfig.NetworkDevice22,
+		vmConfig.NetworkDevice23,
+		vmConfig.NetworkDevice24,
+		vmConfig.NetworkDevice25,
+		vmConfig.NetworkDevice26,
+		vmConfig.NetworkDevice27,
+		vmConfig.NetworkDevice28,
+		vmConfig.NetworkDevice29,
+		vmConfig.NetworkDevice30,
+		vmConfig.NetworkDevice31,
 	}
 
 	for ni, nd := range networkDeviceObjects {
@@ -5559,6 +5684,7 @@ func vmUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.D
 		cpuCores := cpuBlock[mkResourceVirtualEnvironmentVMCPUCores].(int)
 		cpuFlags := cpuBlock[mkResourceVirtualEnvironmentVMCPUFlags].([]interface{})
 		cpuHotplugged := cpuBlock[mkResourceVirtualEnvironmentVMCPUHotplugged].(int)
+		cpuLimit := cpuBlock[mkResourceVirtualEnvironmentVMCPULimit].(int)
 		cpuNUMA := types.CustomBool(cpuBlock[mkResourceVirtualEnvironmentVMCPUNUMA].(bool))
 		cpuSockets := cpuBlock[mkResourceVirtualEnvironmentVMCPUSockets].(int)
 		cpuType := cpuBlock[mkResourceVirtualEnvironmentVMCPUType].(string)
@@ -5579,6 +5705,12 @@ func vmUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.D
 			updateBody.VirtualCPUCount = &cpuHotplugged
 		} else {
 			del = append(del, "vcpus")
+		}
+
+		if cpuLimit > 0 {
+			updateBody.CPULimit = &cpuLimit
+		} else {
+			del = append(del, "cpulimit")
 		}
 
 		cpuFlagsConverted := make([]string, len(cpuFlags))

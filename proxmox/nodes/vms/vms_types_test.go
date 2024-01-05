@@ -9,6 +9,7 @@ package vms
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/bpg/terraform-provider-proxmox/proxmox/types"
@@ -65,6 +66,60 @@ func TestCustomStorageDevice_UnmarshalJSON(t *testing.T) {
 	}
 }
 
+func TestCustomStorageDevice_IsCloudInitDrive(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		device CustomStorageDevice
+		want   bool
+	}{
+		{
+			name: "simple volume",
+			device: CustomStorageDevice{
+				FileVolume: "local-lvm:vm-131-disk-0",
+			},
+			want: false,
+		}, {
+			name: "on directory storage",
+			device: CustomStorageDevice{
+				Media:      types.StrPtr("cdrom"),
+				FileVolume: "local:131/vm-131-cloudinit.qcow2",
+			},
+			want: true,
+		}, {
+			name: "on block storage",
+			device: CustomStorageDevice{
+				Media:      types.StrPtr("cdrom"),
+				FileVolume: "local-lvm:vm-131-cloudinit",
+			},
+			want: true,
+		}, {
+			name: "wrong VM ID",
+			device: CustomStorageDevice{
+				Media:      types.StrPtr("cdrom"),
+				FileVolume: "local-lvm:vm-123-cloudinit",
+			},
+			want: false,
+		}, {
+			name: "not a cdrom",
+			device: CustomStorageDevice{
+				FileVolume: "local-lvm:vm-123-cloudinit",
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got := tt.device.IsCloudInitDrive(131)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestCustomPCIDevice_UnmarshalJSON(t *testing.T) {
 	t.Parallel()
 
@@ -78,12 +133,7 @@ func TestCustomPCIDevice_UnmarshalJSON(t *testing.T) {
 			name: "id only pci device",
 			line: `"0000:81:00.2"`,
 			want: &CustomPCIDevice{
-				DeviceIDs:  &[]string{"0000:81:00.2"},
-				MDev:       nil,
-				PCIExpress: types.BoolPtr(false),
-				ROMBAR:     types.BoolPtr(true),
-				ROMFile:    nil,
-				XVGA:       types.BoolPtr(false),
+				DeviceIDs: &[]string{"0000:81:00.2"},
 			},
 		},
 		{
@@ -121,6 +171,7 @@ func TestCustomPCIDevice_UnmarshalJSON(t *testing.T) {
 			if err := r.UnmarshalJSON([]byte(tt.line)); (err != nil) != tt.wantErr {
 				t.Errorf("UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
 			}
+			require.Equal(t, tt.want, r)
 		})
 	}
 }

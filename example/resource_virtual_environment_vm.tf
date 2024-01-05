@@ -13,6 +13,7 @@ resource "proxmox_virtual_environment_vm" "example_template" {
   cpu {
     cores = 2
     numa  = true
+    limit = 64
   }
 
   smbios {
@@ -47,7 +48,7 @@ resource "proxmox_virtual_environment_vm" "example_template" {
 
   disk {
     datastore_id = local.datastore_id
-    file_id      = proxmox_virtual_environment_file.ubuntu_cloud_image.id
+    file_id      = proxmox_virtual_environment_download_file.latest_debian_12_bookworm_qcow2_img.id
     interface    = "scsi0"
     discard      = "on"
     cache        = "writeback"
@@ -66,7 +67,7 @@ resource "proxmox_virtual_environment_vm" "example_template" {
     interface    = "scsi4"
 
     dns {
-      server = "1.1.1.1"
+      servers = ["1.1.1.1", "8.8.8.8"]
     }
 
     ip_config {
@@ -142,6 +143,10 @@ resource "proxmox_virtual_environment_vm" "example" {
     ]
   }
 
+  smbios {
+    serial = "my-custom-serial"
+  }
+
   initialization {
     // if unspecified:
     //   - autodetected if there is a cloud-init device on the template
@@ -149,7 +154,7 @@ resource "proxmox_virtual_environment_vm" "example" {
     interface = "scsi4"
 
     dns {
-      server = "8.8.8.8"
+      servers = ["1.1.1.1"]
     }
     ip_config {
       ipv4 {

@@ -1,5 +1,84 @@
 # Changelog
 
+## [0.43.0](https://github.com/bpg/terraform-provider-proxmox/compare/v0.42.1...v0.43.0) (2024-01-04)
+
+
+### Features
+
+* **provider:** add DNS lookup fallback for node IP resolution ([#848](https://github.com/bpg/terraform-provider-proxmox/issues/848)) ([d398c9c](https://github.com/bpg/terraform-provider-proxmox/commit/d398c9c102fc2f6741b3e6d574fcfb8a4f7f49aa))
+* **storage:** add new resource `proxmox_virtual_environment_download_file`  ([#837](https://github.com/bpg/terraform-provider-proxmox/issues/837)) ([58347c0](https://github.com/bpg/terraform-provider-proxmox/commit/58347c09fe012e35025613923d95c5aa8340318a))
+
+
+### Miscellaneous
+
+* **deps:** bump crazy-max/ghaction-import-gpg from 6.0.0 to 6.1.0 ([#855](https://github.com/bpg/terraform-provider-proxmox/issues/855)) ([620bb84](https://github.com/bpg/terraform-provider-proxmox/commit/620bb84635d38181e841a8d41cd8a01dd4afd83b))
+* **deps:** bump github.com/goreleaser/goreleaser from 1.22.1 to 1.23.0 in /tools ([#854](https://github.com/bpg/terraform-provider-proxmox/issues/854)) ([3914bc2](https://github.com/bpg/terraform-provider-proxmox/commit/3914bc28b64decbcc853c0e6aa3188b3343ebf81))
+* **docs:** update provider documentation with more details about token use ([#846](https://github.com/bpg/terraform-provider-proxmox/issues/846)) ([2677445](https://github.com/bpg/terraform-provider-proxmox/commit/2677445802bf792fbd2b92ec8120f1ddacdb299a))
+
+## [0.42.1](https://github.com/bpg/terraform-provider-proxmox/compare/v0.42.0...v0.42.1) (2023-12-29)
+
+
+### Bug Fixes
+
+* **lxc:** add missing `onboot` param on container clone create ([#838](https://github.com/bpg/terraform-provider-proxmox/issues/838)) ([40102a6](https://github.com/bpg/terraform-provider-proxmox/commit/40102a6a501a5ead3219492f34255a25c4f21371))
+* **vm,lxc:** accept IPv6 in `initialization.dns.servers` attribute ([#842](https://github.com/bpg/terraform-provider-proxmox/issues/842)) ([bf5cbd9](https://github.com/bpg/terraform-provider-proxmox/commit/bf5cbd9dad116a4515bd2eb193c296097b1e4b84))
+* **vm,lxc:** unexpected state drift when using `initialization.dns.servers` ([#844](https://github.com/bpg/terraform-provider-proxmox/issues/844)) ([ac923cd](https://github.com/bpg/terraform-provider-proxmox/commit/ac923cd1b42c0c64d9829beb1ab552680b21d98b))
+* **vm:** Fixed missing default for disk discard ([#840](https://github.com/bpg/terraform-provider-proxmox/issues/840)) ([5281ac2](https://github.com/bpg/terraform-provider-proxmox/commit/5281ac24921795ed933047e5d9ca953add15bdd0))
+
+
+### Miscellaneous
+
+* **deps:** bump github.com/go-git/go-git/v5 from 5.7.0 to 5.11.0 in /tools ([#839](https://github.com/bpg/terraform-provider-proxmox/issues/839)) ([f860c4b](https://github.com/bpg/terraform-provider-proxmox/commit/f860c4bab54344beb4fd54366adcf940ea1463fe))
+* **tests:** Update acceptance tests to PVE 8.1, add docs ([#834](https://github.com/bpg/terraform-provider-proxmox/issues/834)) ([d8f82d4](https://github.com/bpg/terraform-provider-proxmox/commit/d8f82d47b3a74e4b64a26757522c067a635e4fa3))
+
+## [0.42.0](https://github.com/bpg/terraform-provider-proxmox/compare/v0.41.0...v0.42.0) (2023-12-23)
+
+
+### Features
+
+* **vm, lxc:** add new `initialization.dns.servers` param to vm and container ([#832](https://github.com/bpg/terraform-provider-proxmox/issues/832)) ([16e571d](https://github.com/bpg/terraform-provider-proxmox/commit/16e571dc199c8977b3954e3c56c9b96cc351503e))
+* **vm:** add new dns servers param to vm and container, deprecated server param ([16e571d](https://github.com/bpg/terraform-provider-proxmox/commit/16e571dc199c8977b3954e3c56c9b96cc351503e))
+* **vm:** add support for up to 32 network interfaces ([#822](https://github.com/bpg/terraform-provider-proxmox/issues/822)) ([4113bec](https://github.com/bpg/terraform-provider-proxmox/commit/4113bec1b5184cd30c0435ae50470a8f7ab3ba39))
+
+
+### Bug Fixes
+
+* **provider:** allow FQDN for `ssh.node.address` in provider's config ([#824](https://github.com/bpg/terraform-provider-proxmox/issues/824)) ([34df977](https://github.com/bpg/terraform-provider-proxmox/commit/34df9773c34b43ba39b5d8505b5916b52f87ff3e))
+* **vm:** update `smbios` during clone ([#827](https://github.com/bpg/terraform-provider-proxmox/issues/827)) ([0ffe75a](https://github.com/bpg/terraform-provider-proxmox/commit/0ffe75afa44995d4b648687281974e990029977e))
+
+
+### Miscellaneous
+
+* **deps:** bump golang.org/x/crypto from 0.14.0 to 0.17.0 in /tools ([#819](https://github.com/bpg/terraform-provider-proxmox/issues/819)) ([21a4b01](https://github.com/bpg/terraform-provider-proxmox/commit/21a4b01cd16fec6d3f04ae0e2c7eab9a021ee1e6))
+* **deps:** bump golang.org/x/crypto from 0.16.0 to 0.17.0 ([#820](https://github.com/bpg/terraform-provider-proxmox/issues/820)) ([ec31d75](https://github.com/bpg/terraform-provider-proxmox/commit/ec31d75fe1a93e110f4e21108c4f69d12c9a38d7))
+* **docs:** improve make example docs and add proxmox setup how-to ([#829](https://github.com/bpg/terraform-provider-proxmox/issues/829)) ([4f54f89](https://github.com/bpg/terraform-provider-proxmox/commit/4f54f89b5db4cf37321b9c021a411b747093325f))
+
+## [0.41.0](https://github.com/bpg/terraform-provider-proxmox/compare/v0.40.0...v0.41.0) (2023-12-18)
+
+
+### Features
+
+* **vm:** add `cpu.limit` attribute ([#814](https://github.com/bpg/terraform-provider-proxmox/issues/814)) ([9712952](https://github.com/bpg/terraform-provider-proxmox/commit/9712952e2614a9af6a5a35a4cf318af44684f063))
+* **vm:** support stopping (rather than shutting down) VMs on resource destroy ([#783](https://github.com/bpg/terraform-provider-proxmox/issues/783)) ([6ebe8dc](https://github.com/bpg/terraform-provider-proxmox/commit/6ebe8dcc60be12276d9f2847fb9242e93be98441))
+
+
+### Bug Fixes
+
+* **docs:** add clone/full parameter for vms ([#797](https://github.com/bpg/terraform-provider-proxmox/issues/797)) ([86d0f07](https://github.com/bpg/terraform-provider-proxmox/commit/86d0f07e9b6023d0c3627f45f9944f26d26a4e1d))
+* **provider:** typo in provider example ([#785](https://github.com/bpg/terraform-provider-proxmox/issues/785)) ([32bdc21](https://github.com/bpg/terraform-provider-proxmox/commit/32bdc2175076a4a3cc89bc0ff18035fb9b8aa4d6))
+* **vm:** hostpci devices not showing up in refresh plan ([#578](https://github.com/bpg/terraform-provider-proxmox/issues/578)) ([aa939c7](https://github.com/bpg/terraform-provider-proxmox/commit/aa939c731f7bc36213b6d0abc51cc284a1295338))
+* **vm:** panic at read when cloud-init drive is on directory storage ([#811](https://github.com/bpg/terraform-provider-proxmox/issues/811)) ([3e0ef1d](https://github.com/bpg/terraform-provider-proxmox/commit/3e0ef1d08b036297a5d8326aedce6c43c1200bb2))
+
+
+### Miscellaneous
+
+* **deps:** bump actions/setup-go from 4 to 5 ([#791](https://github.com/bpg/terraform-provider-proxmox/issues/791)) ([164a72d](https://github.com/bpg/terraform-provider-proxmox/commit/164a72d19d9c3a952364bfbedb5a4295e2fd48ea))
+* **deps:** bump actions/stale from 8 to 9 ([#790](https://github.com/bpg/terraform-provider-proxmox/issues/790)) ([02b5da7](https://github.com/bpg/terraform-provider-proxmox/commit/02b5da705da682b9325a1ac882f30993c8f96bb0))
+* **deps:** bump github.com/brianvoe/gofakeit/v6 from 6.26.0 to 6.26.3 ([#807](https://github.com/bpg/terraform-provider-proxmox/issues/807)) ([1d69c69](https://github.com/bpg/terraform-provider-proxmox/commit/1d69c691acdacf062406f27e5daf993c70ed04d8))
+* **deps:** bump github.com/google/uuid from 1.4.0 to 1.5.0 ([#805](https://github.com/bpg/terraform-provider-proxmox/issues/805)) ([3b4a69e](https://github.com/bpg/terraform-provider-proxmox/commit/3b4a69edfae45eaa7edb0b5bff7310f79fe542be))
+* **deps:** bump github.com/hashicorp/terraform-plugin-mux from 0.12.0 to 0.13.0 ([#806](https://github.com/bpg/terraform-provider-proxmox/issues/806)) ([53270e2](https://github.com/bpg/terraform-provider-proxmox/commit/53270e23108657e0e878859950205a6dcc7e9b1c))
+* **deps:** bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.30.0 to 2.31.0 ([#808](https://github.com/bpg/terraform-provider-proxmox/issues/808)) ([5c91b91](https://github.com/bpg/terraform-provider-proxmox/commit/5c91b91938e0f7e3101a3472ae3be866b3ec0f26))
+
 ## [0.40.0](https://github.com/bpg/terraform-provider-proxmox/compare/v0.39.0...v0.40.0) (2023-12-06)
 
 

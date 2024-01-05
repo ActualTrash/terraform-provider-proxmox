@@ -42,7 +42,7 @@ resource "proxmox_virtual_environment_container" "ubuntu_container" {
   }
 
   operating_system {
-    template_file_id = proxmox_virtual_environment_file.ubuntu_container_template.id
+    template_file_id = proxmox_virtual_environment_file.latest_ubuntu_22_jammy_lxc_img.id
     type             = "ubuntu"
   }
 
@@ -61,14 +61,11 @@ resource "proxmox_virtual_environment_container" "ubuntu_container" {
 
 }
 
-resource "proxmox_virtual_environment_file" "ubuntu_container_template" {
+resource "proxmox_virtual_environment_download_file" "latest_ubuntu_22_jammy_lxc_img" {
   content_type = "vztmpl"
   datastore_id = "local"
   node_name    = "first-node"
-
-  source_file {
-    path = "http://download.proxmox.com/images/system/ubuntu-20.04-standard_20.04-1_amd64.tar.gz"
-  }
+  url          = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.tar.gz"
 }
 
 resource "random_password" "ubuntu_container_password" {
@@ -129,7 +126,8 @@ output "ubuntu_container_public_key" {
 - `initialization` - (Optional) The initialization configuration.
   - `dns` - (Optional) The DNS configuration.
     - `domain` - (Optional) The DNS search domain.
-    - `server` - (Optional) The DNS server.
+    - `server` - (Optional) The DNS server. The `server` attribute is deprecated and will be removed in a future release. Please use the `servers` attribute instead.
+    - `servers` - (Optional) The list of DNS servers.
   - `hostname` - (Optional) The hostname.
   - `ip_config` - (Optional) The IP configuration (one block per network
       device).

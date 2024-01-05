@@ -2,7 +2,7 @@ GOFMT_FILES?=$$(find . -name '*.go' | grep -v vendor)
 NAME=terraform-provider-proxmox
 TARGETS=darwin linux windows
 TERRAFORM_PLUGIN_EXTENSION=
-VERSION=0.40.0# x-release-please-version
+VERSION=0.43.0# x-release-please-version
 
 ifeq ($(OS),Windows_NT)
 	TERRAFORM_PLATFORM=windows_amd64
@@ -87,11 +87,8 @@ test:
 
 .PHONY: testacc
 testacc:
-    # env vars required for acceptance tests
-    #   - PROXMOX_VE_ENDPOINT
-    #   - PROXMOX_VE_USERNAME
-    #   - PROXMOX_VE_PASSWORD
-	TF_ACC=1 go test ./...
+	@# explicitly add TF_ACC=1 to trigger the acceptance tests, `testacc.env` might be missing or incomplete  
+	@TF_ACC=1 env $$(cat testacc.env | xargs) go test ./...
 
 .PHONY: lint
 lint:

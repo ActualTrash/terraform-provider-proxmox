@@ -187,8 +187,8 @@ type CustomStorageDevice struct {
 }
 
 // PathInDatastore returns path part of FileVolume or nil if it is not yet allocated.
-func (r CustomStorageDevice) PathInDatastore() *string {
-	probablyDatastoreID, pathInDatastore, hasDatastoreID := strings.Cut(r.FileVolume, ":")
+func (d CustomStorageDevice) PathInDatastore() *string {
+	probablyDatastoreID, pathInDatastore, hasDatastoreID := strings.Cut(d.FileVolume, ":")
 	if !hasDatastoreID {
 		// when no ':' separator is found, 'Cut' places the whole string to 'probablyDatastoreID',
 		// we want it in 'pathInDatastore' (as it is absolute filesystem path)
@@ -215,8 +215,8 @@ func (r CustomStorageDevice) PathInDatastore() *string {
 }
 
 // IsOwnedBy returns true, if CustomStorageDevice is owned by given VM. Not yet allocated volumes are not owned by any VM.
-func (r CustomStorageDevice) IsOwnedBy(vmID int) bool {
-	pathInDatastore := r.PathInDatastore()
+func (d CustomStorageDevice) IsOwnedBy(vmID int) bool {
+	pathInDatastore := d.PathInDatastore()
 	if pathInDatastore == nil {
 		// not yet allocated volume, consider disk not owned by any VM
 		// NOTE: if needed, create IsOwnedByOtherThan(vmId) instead of changing this return value.
@@ -234,6 +234,12 @@ func (r CustomStorageDevice) IsOwnedBy(vmID int) bool {
 	}
 
 	return false
+}
+
+// IsCloudInitDrive returns true, if CustomStorageDevice is a cloud-init drive.
+func (d CustomStorageDevice) IsCloudInitDrive(vmID int) bool {
+	return d.Media != nil && *d.Media == "cdrom" &&
+		strings.Contains(d.FileVolume, fmt.Sprintf("vm-%d-cloudinit", vmID))
 }
 
 // CustomStorageDevices handles QEMU SATA device parameters.
@@ -461,6 +467,30 @@ type GetResponseData struct {
 	IPConfig5            *CustomCloudInitIPConfig        `json:"ipconfig5,omitempty"`
 	IPConfig6            *CustomCloudInitIPConfig        `json:"ipconfig6,omitempty"`
 	IPConfig7            *CustomCloudInitIPConfig        `json:"ipconfig7,omitempty"`
+	IPConfig8            *CustomCloudInitIPConfig        `json:"ipconfig8,omitempty"`
+	IPConfig9            *CustomCloudInitIPConfig        `json:"ipconfig9,omitempty"`
+	IPConfig10           *CustomCloudInitIPConfig        `json:"ipconfig10,omitempty"`
+	IPConfig11           *CustomCloudInitIPConfig        `json:"ipconfig11,omitempty"`
+	IPConfig12           *CustomCloudInitIPConfig        `json:"ipconfig12,omitempty"`
+	IPConfig13           *CustomCloudInitIPConfig        `json:"ipconfig13,omitempty"`
+	IPConfig14           *CustomCloudInitIPConfig        `json:"ipconfig14,omitempty"`
+	IPConfig15           *CustomCloudInitIPConfig        `json:"ipconfig15,omitempty"`
+	IPConfig16           *CustomCloudInitIPConfig        `json:"ipconfig16,omitempty"`
+	IPConfig17           *CustomCloudInitIPConfig        `json:"ipconfig17,omitempty"`
+	IPConfig18           *CustomCloudInitIPConfig        `json:"ipconfig18,omitempty"`
+	IPConfig19           *CustomCloudInitIPConfig        `json:"ipconfig19,omitempty"`
+	IPConfig20           *CustomCloudInitIPConfig        `json:"ipconfig20,omitempty"`
+	IPConfig21           *CustomCloudInitIPConfig        `json:"ipconfig21,omitempty"`
+	IPConfig22           *CustomCloudInitIPConfig        `json:"ipconfig22,omitempty"`
+	IPConfig23           *CustomCloudInitIPConfig        `json:"ipconfig23,omitempty"`
+	IPConfig24           *CustomCloudInitIPConfig        `json:"ipconfig24,omitempty"`
+	IPConfig25           *CustomCloudInitIPConfig        `json:"ipconfig25,omitempty"`
+	IPConfig26           *CustomCloudInitIPConfig        `json:"ipconfig26,omitempty"`
+	IPConfig27           *CustomCloudInitIPConfig        `json:"ipconfig27,omitempty"`
+	IPConfig28           *CustomCloudInitIPConfig        `json:"ipconfig28,omitempty"`
+	IPConfig29           *CustomCloudInitIPConfig        `json:"ipconfig29,omitempty"`
+	IPConfig30           *CustomCloudInitIPConfig        `json:"ipconfig30,omitempty"`
+	IPConfig31           *CustomCloudInitIPConfig        `json:"ipconfig31,omitempty"`
 	KeyboardLayout       *string                         `json:"keyboard,omitempty"`
 	KVMArguments         *string                         `json:"args,omitempty"`
 	KVMEnabled           *types.CustomBool               `json:"kvm,omitempty"`
@@ -478,6 +508,30 @@ type GetResponseData struct {
 	NetworkDevice5       *CustomNetworkDevice            `json:"net5,omitempty"`
 	NetworkDevice6       *CustomNetworkDevice            `json:"net6,omitempty"`
 	NetworkDevice7       *CustomNetworkDevice            `json:"net7,omitempty"`
+	NetworkDevice8       *CustomNetworkDevice            `json:"net8,omitempty"`
+	NetworkDevice9       *CustomNetworkDevice            `json:"net9,omitempty"`
+	NetworkDevice10      *CustomNetworkDevice            `json:"net10,omitempty"`
+	NetworkDevice11      *CustomNetworkDevice            `json:"net11,omitempty"`
+	NetworkDevice12      *CustomNetworkDevice            `json:"net12,omitempty"`
+	NetworkDevice13      *CustomNetworkDevice            `json:"net13,omitempty"`
+	NetworkDevice14      *CustomNetworkDevice            `json:"net14,omitempty"`
+	NetworkDevice15      *CustomNetworkDevice            `json:"net15,omitempty"`
+	NetworkDevice16      *CustomNetworkDevice            `json:"net16,omitempty"`
+	NetworkDevice17      *CustomNetworkDevice            `json:"net17,omitempty"`
+	NetworkDevice18      *CustomNetworkDevice            `json:"net18,omitempty"`
+	NetworkDevice19      *CustomNetworkDevice            `json:"net19,omitempty"`
+	NetworkDevice20      *CustomNetworkDevice            `json:"net20,omitempty"`
+	NetworkDevice21      *CustomNetworkDevice            `json:"net21,omitempty"`
+	NetworkDevice22      *CustomNetworkDevice            `json:"net22,omitempty"`
+	NetworkDevice23      *CustomNetworkDevice            `json:"net23,omitempty"`
+	NetworkDevice24      *CustomNetworkDevice            `json:"net24,omitempty"`
+	NetworkDevice25      *CustomNetworkDevice            `json:"net25,omitempty"`
+	NetworkDevice26      *CustomNetworkDevice            `json:"net26,omitempty"`
+	NetworkDevice27      *CustomNetworkDevice            `json:"net27,omitempty"`
+	NetworkDevice28      *CustomNetworkDevice            `json:"net28,omitempty"`
+	NetworkDevice29      *CustomNetworkDevice            `json:"net29,omitempty"`
+	NetworkDevice30      *CustomNetworkDevice            `json:"net30,omitempty"`
+	NetworkDevice31      *CustomNetworkDevice            `json:"net31,omitempty"`
 	NUMADevices          *CustomNUMADevices              `json:"numa_devices,omitempty"`
 	NUMAEnabled          *types.CustomBool               `json:"numa,omitempty"`
 	OSType               *string                         `json:"ostype,omitempty"`
@@ -1154,73 +1208,73 @@ func (r CustomStartupOrder) EncodeValues(key string, v *url.Values) error {
 }
 
 // EncodeValues converts a CustomStorageDevice struct to a URL vlaue.
-func (r CustomStorageDevice) EncodeValues(key string, v *url.Values) error {
+func (d CustomStorageDevice) EncodeValues(key string, v *url.Values) error {
 	values := []string{
-		fmt.Sprintf("file=%s", r.FileVolume),
+		fmt.Sprintf("file=%s", d.FileVolume),
 	}
 
-	if r.AIO != nil {
-		values = append(values, fmt.Sprintf("aio=%s", *r.AIO))
+	if d.AIO != nil {
+		values = append(values, fmt.Sprintf("aio=%s", *d.AIO))
 	}
 
-	if r.BackupEnabled != nil {
-		if *r.BackupEnabled {
+	if d.BackupEnabled != nil {
+		if *d.BackupEnabled {
 			values = append(values, "backup=1")
 		} else {
 			values = append(values, "backup=0")
 		}
 	}
 
-	if r.BurstableReadSpeedMbps != nil {
-		values = append(values, fmt.Sprintf("mbps_rd_max=%d", *r.BurstableReadSpeedMbps))
+	if d.BurstableReadSpeedMbps != nil {
+		values = append(values, fmt.Sprintf("mbps_rd_max=%d", *d.BurstableReadSpeedMbps))
 	}
 
-	if r.BurstableWriteSpeedMbps != nil {
-		values = append(values, fmt.Sprintf("mbps_wr_max=%d", *r.BurstableWriteSpeedMbps))
+	if d.BurstableWriteSpeedMbps != nil {
+		values = append(values, fmt.Sprintf("mbps_wr_max=%d", *d.BurstableWriteSpeedMbps))
 	}
 
-	if r.Format != nil {
-		values = append(values, fmt.Sprintf("format=%s", *r.Format))
+	if d.Format != nil {
+		values = append(values, fmt.Sprintf("format=%s", *d.Format))
 	}
 
-	if r.MaxReadSpeedMbps != nil {
-		values = append(values, fmt.Sprintf("mbps_rd=%d", *r.MaxReadSpeedMbps))
+	if d.MaxReadSpeedMbps != nil {
+		values = append(values, fmt.Sprintf("mbps_rd=%d", *d.MaxReadSpeedMbps))
 	}
 
-	if r.MaxWriteSpeedMbps != nil {
-		values = append(values, fmt.Sprintf("mbps_wr=%d", *r.MaxWriteSpeedMbps))
+	if d.MaxWriteSpeedMbps != nil {
+		values = append(values, fmt.Sprintf("mbps_wr=%d", *d.MaxWriteSpeedMbps))
 	}
 
-	if r.Media != nil {
-		values = append(values, fmt.Sprintf("media=%s", *r.Media))
+	if d.Media != nil {
+		values = append(values, fmt.Sprintf("media=%s", *d.Media))
 	}
 
-	if r.Size != nil {
-		values = append(values, fmt.Sprintf("size=%s", *r.Size))
+	if d.Size != nil {
+		values = append(values, fmt.Sprintf("size=%s", *d.Size))
 	}
 
-	if r.IOThread != nil {
-		if *r.IOThread {
+	if d.IOThread != nil {
+		if *d.IOThread {
 			values = append(values, "iothread=1")
 		} else {
 			values = append(values, "iothread=0")
 		}
 	}
 
-	if r.SSD != nil {
-		if *r.SSD {
+	if d.SSD != nil {
+		if *d.SSD {
 			values = append(values, "ssd=1")
 		} else {
 			values = append(values, "ssd=0")
 		}
 	}
 
-	if r.Discard != nil && *r.Discard != "" {
-		values = append(values, fmt.Sprintf("discard=%s", *r.Discard))
+	if d.Discard != nil && *d.Discard != "" {
+		values = append(values, fmt.Sprintf("discard=%s", *d.Discard))
 	}
 
-	if r.Cache != nil && *r.Cache != "" {
-		values = append(values, fmt.Sprintf("cache=%s", *r.Cache))
+	if d.Cache != nil && *d.Cache != "" {
+		values = append(values, fmt.Sprintf("cache=%s", *d.Cache))
 	}
 
 	v.Add(key, strings.Join(values, ","))
@@ -1229,8 +1283,8 @@ func (r CustomStorageDevice) EncodeValues(key string, v *url.Values) error {
 }
 
 // EncodeValues converts a CustomStorageDevices array to multiple URL values.
-func (r CustomStorageDevices) EncodeValues(_ string, v *url.Values) error {
-	for s, d := range r {
+func (d CustomStorageDevices) EncodeValues(_ string, v *url.Values) error {
+	for s, d := range d {
 		if d.Enabled {
 			if err := d.EncodeValues(s, v); err != nil {
 				return fmt.Errorf("error encoding storage device %s: %w", s, err)
@@ -1901,7 +1955,7 @@ func (r *CustomStartupOrder) UnmarshalJSON(b []byte) error {
 }
 
 // UnmarshalJSON converts a CustomStorageDevice string to an object.
-func (r *CustomStorageDevice) UnmarshalJSON(b []byte) error {
+func (d *CustomStorageDevice) UnmarshalJSON(b []byte) error {
 	var s string
 
 	if err := json.Unmarshal(b, &s); err != nil {
@@ -1915,24 +1969,24 @@ func (r *CustomStorageDevice) UnmarshalJSON(b []byte) error {
 
 		//nolint:nestif
 		if len(v) == 1 {
-			r.FileVolume = v[0]
+			d.FileVolume = v[0]
 
 			ext := filepath.Ext(v[0])
 			if ext != "" {
 				format := string([]byte(ext)[1:])
-				r.Format = &format
+				d.Format = &format
 			}
 		} else if len(v) == 2 {
 			switch v[0] {
 			case "aio":
-				r.AIO = &v[1]
+				d.AIO = &v[1]
 
 			case "backup":
 				bv := types.CustomBool(v[1] == "1")
-				r.BackupEnabled = &bv
+				d.BackupEnabled = &bv
 
 			case "file":
-				r.FileVolume = v[1]
+				d.FileVolume = v[1]
 
 			case "mbps_rd":
 				iv, err := strconv.Atoi(v[1])
@@ -1940,59 +1994,59 @@ func (r *CustomStorageDevice) UnmarshalJSON(b []byte) error {
 					return fmt.Errorf("failed to convert mbps_rd to int: %w", err)
 				}
 
-				r.MaxReadSpeedMbps = &iv
+				d.MaxReadSpeedMbps = &iv
 			case "mbps_rd_max":
 				iv, err := strconv.Atoi(v[1])
 				if err != nil {
 					return fmt.Errorf("failed to convert mbps_rd_max to int: %w", err)
 				}
 
-				r.BurstableReadSpeedMbps = &iv
+				d.BurstableReadSpeedMbps = &iv
 			case "mbps_wr":
 				iv, err := strconv.Atoi(v[1])
 				if err != nil {
 					return fmt.Errorf("failed to convert mbps_wr to int: %w", err)
 				}
 
-				r.MaxWriteSpeedMbps = &iv
+				d.MaxWriteSpeedMbps = &iv
 			case "mbps_wr_max":
 				iv, err := strconv.Atoi(v[1])
 				if err != nil {
 					return fmt.Errorf("failed to convert mbps_wr_max to int: %w", err)
 				}
 
-				r.BurstableWriteSpeedMbps = &iv
+				d.BurstableWriteSpeedMbps = &iv
 			case "media":
-				r.Media = &v[1]
+				d.Media = &v[1]
 
 			case "size":
-				r.Size = new(types.DiskSize)
-				err := r.Size.UnmarshalJSON([]byte(v[1]))
+				d.Size = new(types.DiskSize)
+				err := d.Size.UnmarshalJSON([]byte(v[1]))
 				if err != nil {
 					return fmt.Errorf("failed to unmarshal disk size: %w", err)
 				}
 
 			case "format":
-				r.Format = &v[1]
+				d.Format = &v[1]
 
 			case "iothread":
 				bv := types.CustomBool(v[1] == "1")
-				r.IOThread = &bv
+				d.IOThread = &bv
 
 			case "ssd":
 				bv := types.CustomBool(v[1] == "1")
-				r.SSD = &bv
+				d.SSD = &bv
 
 			case "discard":
-				r.Discard = &v[1]
+				d.Discard = &v[1]
 
 			case "cache":
-				r.Cache = &v[1]
+				d.Cache = &v[1]
 			}
 		}
 	}
 
-	r.Enabled = true
+	d.Enabled = true
 
 	return nil
 }

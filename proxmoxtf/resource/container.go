@@ -98,6 +98,7 @@ const (
 	mkResourceVirtualEnvironmentContainerInitializationDNS                 = "dns"
 	mkResourceVirtualEnvironmentContainerInitializationDNSDomain           = "domain"
 	mkResourceVirtualEnvironmentContainerInitializationDNSServer           = "server"
+	mkResourceVirtualEnvironmentContainerInitializationDNSServers          = "servers"
 	mkResourceVirtualEnvironmentContainerInitializationHostname            = "hostname"
 	mkResourceVirtualEnvironmentContainerInitializationIPConfig            = "ip_config"
 	mkResourceVirtualEnvironmentContainerInitializationIPConfigIPv4        = "ipv4"
@@ -388,8 +389,17 @@ func Container() *schema.Resource {
 									mkResourceVirtualEnvironmentContainerInitializationDNSServer: {
 										Type:        schema.TypeString,
 										Description: "The DNS server",
+										Deprecated: "The `server` attribute is deprecated and will be removed in a future release. " +
+											"Please use the `servers` attribute instead.",
+										Optional: true,
+										Default:  dvResourceVirtualEnvironmentContainerInitializationDNSServer,
+									},
+									mkResourceVirtualEnvironmentContainerInitializationDNSServers: {
+										Type:        schema.TypeList,
+										Description: "The list of DNS servers",
 										Optional:    true,
-										Default:     dvResourceVirtualEnvironmentContainerInitializationDNSServer,
+										Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validation.IsIPAddress},
+										MinItems:    0,
 									},
 								},
 							},
@@ -908,6 +918,9 @@ func containerCreateClone(ctx context.Context, d *schema.ResourceData, m interfa
 	// Now that the virtual machine has been cloned, we need to perform some modifications.
 	updateBody := &containers.UpdateRequestBody{}
 
+	startOnBoot := types.CustomBool(d.Get(mkResourceVirtualEnvironmentContainerStartOnBoot).(bool))
+	updateBody.StartOnBoot = &startOnBoot
+
 	console := d.Get(mkResourceVirtualEnvironmentContainerConsole).([]interface{})
 
 	if len(console) > 0 {
@@ -950,10 +963,18 @@ func containerCreateClone(ctx context.Context, d *schema.ResourceData, m interfa
 		if len(initializationDNS) > 0 {
 			initializationDNSBlock := initializationDNS[0].(map[string]interface{})
 			initializationDNSDomain := initializationDNSBlock[mkResourceVirtualEnvironmentContainerInitializationDNSDomain].(string)
-			initializationDNSServer := initializationDNSBlock[mkResourceVirtualEnvironmentContainerInitializationDNSServer].(string)
-
 			updateBody.DNSDomain = &initializationDNSDomain
-			updateBody.DNSServer = &initializationDNSServer
+
+			servers := initializationDNSBlock[mkResourceVirtualEnvironmentContainerInitializationDNSServers].([]interface{})
+			deprecatedServer := initializationDNSBlock[mkResourceVirtualEnvironmentContainerInitializationDNSServer].(string)
+
+			if len(servers) > 0 {
+				nameserver := strings.Join(ConvertToStringSlice(servers), " ")
+
+				updateBody.DNSServer = &nameserver
+			} else {
+				updateBody.DNSServer = &deprecatedServer
+			}
 		}
 
 		initializationHostname := initializationBlock[mkResourceVirtualEnvironmentContainerInitializationHostname].(string)
@@ -1265,7 +1286,17 @@ func containerCreateCustom(ctx context.Context, d *schema.ResourceData, m interf
 		if len(initializationDNS) > 0 {
 			initializationDNSBlock := initializationDNS[0].(map[string]interface{})
 			initializationDNSDomain = initializationDNSBlock[mkResourceVirtualEnvironmentContainerInitializationDNSDomain].(string)
-			initializationDNSServer = initializationDNSBlock[mkResourceVirtualEnvironmentContainerInitializationDNSServer].(string)
+
+			servers := initializationDNSBlock[mkResourceVirtualEnvironmentContainerInitializationDNSServers].([]interface{})
+			deprecatedServer := initializationDNSBlock[mkResourceVirtualEnvironmentContainerInitializationDNSServer].(string)
+
+			if len(servers) > 0 {
+				nameserver := strings.Join(ConvertToStringSlice(servers), " ")
+
+				initializationDNSServer = nameserver
+			} else {
+				initializationDNSServer = deprecatedServer
+			}
 		}
 
 		initializationHostname = initializationBlock[mkResourceVirtualEnvironmentContainerInitializationHostname].(string)
@@ -1980,10 +2011,31 @@ func containerRead(ctx context.Context, d *schema.ResourceData, m interface{}) d
 			initializationDNS[mkResourceVirtualEnvironmentContainerInitializationDNSDomain] = ""
 		}
 
+		// check what we have in the plan
+		currentInitializationDNSBlock := map[string]interface{}{}
+		currentInitialization := d.Get(mkResourceVirtualEnvironmentContainerInitialization).([]interface{})
+
+		if len(currentInitialization) > 0 {
+			currentInitializationBlock := currentInitialization[0].(map[string]interface{})
+			//nolint:lll
+			currentInitializationDNS := currentInitializationBlock[mkResourceVirtualEnvironmentContainerInitializationDNS].([]interface{})
+			if len(currentInitializationDNS) > 0 {
+				currentInitializationDNSBlock = currentInitializationDNS[0].(map[string]interface{})
+			}
+		}
+
+		//nolint:lll
+		currentInitializationDNSServer, ok := currentInitializationDNSBlock[mkResourceVirtualEnvironmentContainerInitializationDNSServer]
 		if containerConfig.DNSServer != nil {
-			initializationDNS[mkResourceVirtualEnvironmentContainerInitializationDNSServer] = *containerConfig.DNSServer
+			if ok && currentInitializationDNSServer != "" {
+				initializationDNS[mkResourceVirtualEnvironmentContainerInitializationDNSServer] = *containerConfig.DNSServer
+			} else {
+				dnsServer := strings.Split(*containerConfig.DNSServer, " ")
+				initializationDNS[mkResourceVirtualEnvironmentContainerInitializationDNSServers] = dnsServer
+			}
 		} else {
 			initializationDNS[mkResourceVirtualEnvironmentContainerInitializationDNSServer] = ""
+			initializationDNS[mkResourceVirtualEnvironmentContainerInitializationDNSServers] = []string{}
 		}
 
 		initialization[mkResourceVirtualEnvironmentContainerInitializationDNS] = []interface{}{
@@ -2459,7 +2511,15 @@ func containerUpdate(ctx context.Context, d *schema.ResourceData, m interface{})
 		if len(initializationDNS) > 0 {
 			initializationDNSBlock := initializationDNS[0].(map[string]interface{})
 			initializationDNSDomain = initializationDNSBlock[mkResourceVirtualEnvironmentContainerInitializationDNSDomain].(string)
-			initializationDNSServer = initializationDNSBlock[mkResourceVirtualEnvironmentContainerInitializationDNSServer].(string)
+
+			servers := initializationDNSBlock[mkResourceVirtualEnvironmentContainerInitializationDNSServers].([]interface{})
+			deprecatedServer := initializationDNSBlock[mkResourceVirtualEnvironmentContainerInitializationDNSServer].(string)
+
+			if len(servers) > 0 {
+				initializationDNSServer = strings.Join(ConvertToStringSlice(servers), " ")
+			} else {
+				initializationDNSServer = deprecatedServer
+			}
 		}
 
 		initializationHostname = initializationBlock[mkResourceVirtualEnvironmentContainerInitializationHostname].(string)

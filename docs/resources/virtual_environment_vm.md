@@ -37,7 +37,7 @@ resource "proxmox_virtual_environment_vm" "ubuntu_vm" {
 
   disk {
     datastore_id = "local-lvm"
-    file_id      = proxmox_virtual_environment_file.ubuntu_cloud_image.id
+    file_id      = proxmox_virtual_environment_file.latest_ubuntu_22_jammy_qcow2_img.id
     interface    = "scsi0"
   }
 
@@ -72,14 +72,11 @@ resource "proxmox_virtual_environment_vm" "ubuntu_vm" {
   serial_device {}
 }
 
-resource "proxmox_virtual_environment_file" "ubuntu_cloud_image" {
+resource "proxmox_virtual_environment_download_file" "latest_ubuntu_22_jammy_qcow2_img" {
   content_type = "iso"
   datastore_id = "local"
-  node_name    = "first-node"
-
-  source_file {
-    path = "http://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img"
-  }
+  node_name    = "pve"
+  url          = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
 }
 
 resource "random_password" "ubuntu_vm_password" {
@@ -151,6 +148,7 @@ output "ubuntu_vm_public_key" {
       Sometimes Proxmox errors with timeout when creating multiple clones at
       once.
   - `vm_id` - (Required) The identifier for the source VM.
+  - `full` - (Optional) Full or linked clone (defaults to `true`).
 - `cpu` - (Optional) The CPU configuration.
   - `architecture` - (Optional) The CPU architecture (defaults to `x86_64`).
     - `aarch64` - ARM (64 bit).
@@ -181,6 +179,7 @@ output "ubuntu_vm_public_key" {
           protection for AMD models.
   - `hotplugged` - (Optional) The number of hotplugged vCPUs (defaults
       to `0`).
+  - `limit` - (Optional) Limit of CPU usage, `0...128`. (defaults to `0` -- no limit).
   - `numa` - (Boolean) Enable/disable NUMA. (default to `false`)
   - `sockets` - (Optional) The number of CPU sockets (defaults to `1`).
   - `type` - (Optional) The emulated CPU type, it's recommended to
@@ -329,7 +328,8 @@ output "ubuntu_vm_public_key" {
       otherwise defaults to `ide2`.
   - `dns` - (Optional) The DNS configuration.
     - `domain` - (Optional) The DNS search domain.
-    - `server` - (Optional) The DNS server.
+    - `server` - (Optional) The DNS server. The `server` attribute is deprecated and will be removed in a future release. Please use the `servers` attribute instead.
+    - `servers` - (Optional) The list of DNS servers.
   - `ip_config` - (Optional) The IP configuration (one block per network
       device).
     - `ipv4` - (Optional) The IPv4 configuration.
